@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "767179047447",
+    "project_id": "blogging-e2ada",
+    "storage_bucket": "blogging-e2ada.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:767179047447:android:e4000edbdbb8a4f7c05252",
+        "android_client_info": {
+          "package_name": "com.example.blog"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "767179047447-3423d04jdfe5sh3q52krfj9mvebimlul.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAY_rTX_NTzixNQ9aZzpr1UUQVujLzgI3k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "767179047447-3423d04jdfe5sh3q52krfj9mvebimlul.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,14 @@
+{
+    'htmlPreview': blog.htmlPreview
+    'content': blog.content
+    'title': blog.title
+}
+
+same as: 
+
+List list = [];
+for(int i = 0; i < blog.length; i++){
+    list.add(blog.toJson());
+}
+
+return list;
