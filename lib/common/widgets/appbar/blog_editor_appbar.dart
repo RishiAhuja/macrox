@@ -78,11 +78,7 @@ class BlogEditorAppbar extends StatelessWidget implements PreferredSizeWidget {
             actions: [
               BasicButton(
                 onPressed: onBackButtonPressed,
-                customWidget: Text(
-                  'Save Draft',
-                  style:
-                      GoogleFonts.robotoMono(color: Colors.white, fontSize: 18),
-                ),
+                customWidget: textRepacement,
                 dynamic: true,
               ),
               customActionWidget ?? const SizedBox(),

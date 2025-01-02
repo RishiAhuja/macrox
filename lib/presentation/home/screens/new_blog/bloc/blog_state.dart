@@ -13,4 +13,9 @@ class BlogEditing extends BlogState {
 
 class BlogSaving extends BlogState {}
 
-class BlogSaved extends BlogState {}
+class BlogSavedSuccess extends BlogState {}
+
+class BlogSavedFailed extends BlogState {
+  final String errorMessage;
+  BlogSavedFailed({required this.errorMessage});
+}

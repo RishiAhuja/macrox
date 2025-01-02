@@ -77,8 +77,8 @@ class _HomeState extends State<Home> {
                 children: [
                   Expanded(
                       flex: 1,
-                      child: _firstHalf(
-                          context.isDark, context.isMobile, context)),
+                      child: _firstHalf(context.isDark, context.isMobile,
+                          context, state.userEntity.id)),
                   Expanded(flex: 1, child: _secondHalf(context.isDark)),
                 ],
               ),
@@ -88,8 +88,8 @@ class _HomeState extends State<Home> {
                 children: [
                   Expanded(
                       flex: 1,
-                      child: _firstHalf(
-                          context.isDark, context.isMobile, context)),
+                      child: _firstHalf(context.isDark, context.isMobile,
+                          context, state.userEntity.id)),
                   Expanded(flex: 1, child: _secondHalf(context.isDark)),
                 ],
               ),
@@ -98,7 +98,8 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget _firstHalf(bool isDark, bool isMobile, BuildContext context) {
+  Widget _firstHalf(
+      bool isDark, bool isMobile, BuildContext context, String userUid) {
     return Center(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -121,7 +122,11 @@ class _HomeState extends State<Home> {
                 final blogUid = uuid.v4();
                 sl<AddUsecase>()(
                     params: BlogEntity(
-                        uid: blogUid, content: '', htmlPreview: '', title: ''));
+                        uid: blogUid,
+                        content: '',
+                        htmlPreview: '',
+                        title: '',
+                        userUid: userUid));
                 context.go(
                   '${AppRouterConstants.newblog}/$blogUid',
                   extra: {

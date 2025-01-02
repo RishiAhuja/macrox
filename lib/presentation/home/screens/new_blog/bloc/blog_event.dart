@@ -11,14 +11,11 @@ class SaveDraft extends BlogEvent {
   final String content;
   final String title;
   final String htmlPreview;
+  final String userUid;
   SaveDraft(
       {required this.uid,
       required this.content,
       required this.title,
-      required this.htmlPreview});
-}
-
-class TitleChanged extends BlogEvent {
-  final String title;
-  TitleChanged(this.title);
+      required this.htmlPreview,
+      required this.userUid});
 }

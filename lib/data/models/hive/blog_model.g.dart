@@ -21,13 +21,14 @@ class BlogModelAdapter extends TypeAdapter<BlogModel> {
       content: fields[2] as String,
       htmlPreview: fields[3] as String,
       uid: fields[0] as String,
+      userUid: fields[4] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, BlogModel obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.uid)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class BlogModelAdapter extends TypeAdapter<BlogModel> {
       ..writeByte(2)
       ..write(obj.content)
       ..writeByte(3)
-      ..write(obj.htmlPreview);
+      ..write(obj.htmlPreview)
+      ..writeByte(4)
+      ..write(obj.userUid);
   }
 
   @override

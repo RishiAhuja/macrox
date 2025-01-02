@@ -4,6 +4,7 @@ import 'package:blog/domain/usecases/hive/update_usecase.dart';
 import 'package:blog/presentation/home/screens/new_blog/bloc/blog_event.dart';
 import 'package:blog/presentation/home/screens/new_blog/bloc/blog_state.dart';
 import 'package:blog/service_locator.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 
 class BlogBloc extends HydratedBloc<BlogEvent, BlogState> {
@@ -25,26 +26,32 @@ class BlogBloc extends HydratedBloc<BlogEvent, BlogState> {
     ));
   }
 
-  void _onTitleChanged(TitleChanged event, Emitter<BlogState> emit) {
-    final currentState = state as BlogEditing;
-    emit(BlogEditing(
-      content: currentState.content,
-      htmlPreview: currentState.htmlPreview,
-      title: event.title,
-    ));
-  }
-
-  void _onSaveDraft(SaveDraft event, Emitter<BlogState> emit) {
+  void _onSaveDraft(SaveDraft event, Emitter<BlogState> emit) async {
     emit(BlogSaving());
     print("saving draft");
     sl<UpdateUsecase>().call(
         params: BlogEntity(
+            userUid: event.userUid,
             uid: event.uid,
             content: event.content,
             htmlPreview: event.htmlPreview,
             title: event.title));
     print("saved draft");
-    emit(BlogSaved());
+    await FirebaseFirestore.instance
+        .collection('Users')
+        .doc(event.userUid)
+        .collection('Blogs')
+        .doc(event.uid)
+        .set({
+      'content': event.content,
+      'htmlPreview': event.htmlPreview,
+      'title': event.title,
+      'uid': event.uid
+    }).then((value) {
+      emit(BlogSavedSuccess());
+    }).catchError((error) {
+      emit(BlogSavedFailed(errorMessage: error.toString()));
+    });
   }
 
   @override

@@ -12,10 +12,14 @@ class BlogModel extends HiveObject {
   final String content;
   @HiveField(3)
   final String htmlPreview;
+  @HiveField(4)
+  final String userUid;
 
-  BlogModel(
-      {required this.title,
-      required this.content,
-      required this.htmlPreview,
-      required this.uid});
+  BlogModel({
+    required this.title,
+    required this.content,
+    required this.htmlPreview,
+    required this.uid,
+    required this.userUid,
+  });
 }

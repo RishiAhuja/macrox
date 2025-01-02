@@ -22,6 +22,7 @@ class HiveServiceImpl extends HiveService {
       title: entity.title,
       content: entity.content,
       htmlPreview: entity.htmlPreview,
+      userUid: entity.userUid,
     );
     await blogBox.put(blogModel.uid, blogModel);
   }
@@ -36,6 +37,7 @@ class HiveServiceImpl extends HiveService {
         title: model.title,
         content: model.content,
         htmlPreview: model.htmlPreview,
+        userUid: model.userUid,
       );
     });
 
@@ -50,6 +52,7 @@ class HiveServiceImpl extends HiveService {
       title: entity.title,
       content: entity.content,
       htmlPreview: entity.htmlPreview,
+      userUid: entity.userUid,
     );
     await blogBox.put(entity.uid, blogModel);
   }
