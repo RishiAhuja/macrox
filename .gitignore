@@ -103,7 +103,6 @@ migrate_working_dir/
 **/linux/flutter/generated_plugins.cmake
 
 # Web related
-lib/generated_plugin_registrant.dart
 
 # Coverage
 coverage/

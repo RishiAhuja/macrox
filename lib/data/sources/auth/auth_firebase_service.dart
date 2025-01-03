@@ -80,6 +80,22 @@ class AuthFirebaseServiceImplementation extends AuthFirebaseService {
         'username': request.username,
         'uid': userCredential.user!.uid,
         'createdAt': FieldValue.serverTimestamp(),
+        'followerCount': 0,
+        'followingCount': 0,
+        'followers': [],
+        'following': [],
+        'postCount': 0,
+        'bio': '',
+        'profilePic': '',
+        'coverPic': '',
+        'socials': {
+          'twitter': 'https://x.com/',
+          'instagram': 'https://instagram.com/',
+          'github': 'https://github.com/',
+          'linkedin': 'https://linkedin.com/',
+        },
+        'emailVerified': false,
+        'lastLogin': FieldValue.serverTimestamp(),
       });
 
       // Reserve username

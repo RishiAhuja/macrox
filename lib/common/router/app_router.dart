@@ -3,10 +3,12 @@ import 'package:blog/presentation/auth/screens/signup.dart';
 import 'package:blog/presentation/home/screens/home/home.dart';
 import 'package:blog/presentation/home/screens/new_blog/screen/blog_editor.dart';
 import 'package:blog/presentation/landing/landing.dart';
+import 'package:blog/presentation/profile/screen/profile_page.dart';
 import 'package:go_router/go_router.dart';
 
 class AppRouterConstants {
   static const String newblog = '/blog';
+  static const String profile = '/profile';
 }
 
 class AppRouter {
@@ -21,6 +23,7 @@ class AppRouter {
           final Map<String, dynamic>? extra =
               state.extra as Map<String, dynamic>?;
           return BlogEditor(
+            userUid: extra?['userUid'] ?? '',
             uid: state.pathParameters['uid'] ?? '',
             title: extra?['title'],
             content: extra?['content'],
@@ -30,6 +33,19 @@ class AppRouter {
     GoRoute(
       path: '/home',
       builder: (context, state) => const Home(),
+    ),
+    GoRoute(
+      path: '${AppRouterConstants.profile}/@:username',
+      builder: (context, state) {
+        final Map<String, dynamic>? extra =
+            state.extra as Map<String, dynamic>?;
+        return ProfilePage(
+          email: extra!['email'],
+          name: extra['name'],
+          userUid: extra['userUid'],
+          username: extra['username'],
+        );
+      },
     ),
   ]);
 }

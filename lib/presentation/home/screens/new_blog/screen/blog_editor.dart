@@ -15,6 +15,7 @@ import 'package:blog/presentation/home/widgets/appbar_popup.dart';
 import 'package:blog/responsive/responsive_layout.dart';
 import 'package:blog/service_locator.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -26,19 +27,26 @@ class BlogEditor extends StatelessWidget {
   final String? title;
   final String? content;
   final String? htmlPreview;
+  final String userUid;
   const BlogEditor(
       {super.key,
       required this.uid,
       this.title,
       this.content,
-      this.htmlPreview});
+      this.htmlPreview,
+      required this.userUid});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => sl<BlogBloc>(),
       child: ScreenContent(
-          uid: uid, title: title, content: content, htmlPreview: htmlPreview),
+        uid: uid,
+        title: title,
+        content: content,
+        htmlPreview: htmlPreview,
+        userUid: userUid,
+      ),
     );
   }
 }
@@ -48,18 +56,21 @@ class ScreenContent extends StatefulWidget {
   final String? title;
   final String? content;
   final String? htmlPreview;
+  final String userUid;
   const ScreenContent(
       {super.key,
       required this.uid,
       this.title,
       this.content,
-      this.htmlPreview});
+      this.htmlPreview,
+      required this.userUid});
 
   @override
   State<ScreenContent> createState() => _ScreenContentState();
 }
 
 class _ScreenContentState extends State<ScreenContent> {
+  late Future<QuerySnapshot> _blogsFuture;
   Map<String, BlogEntity> localBlogs = {};
   bool isLoading = true;
   int currentIndex = 1;
@@ -73,6 +84,12 @@ class _ScreenContentState extends State<ScreenContent> {
         ));
     loadBlogs();
     super.initState();
+
+    _blogsFuture = FirebaseFirestore.instance
+        .collection('Users')
+        .doc(widget.userUid)
+        .collection('Blogs')
+        .get();
   }
 
   Future<void> loadBlogs() async {
@@ -248,10 +265,13 @@ class _ScreenContentState extends State<ScreenContent> {
               : AppColors.lightLightBackground,
           borderRadius: BorderRadius.circular(10)),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Align(
               alignment: Alignment.centerRight,
               child: Icon(Icons.arrow_right_rounded)),
+          Text("Locally Available Blogs",
+              style: GoogleFonts.spaceGrotesk(fontSize: 16)),
           ListView.builder(
             shrinkWrap: true,
             itemCount: localBlogs.length,
@@ -289,6 +309,65 @@ class _ScreenContentState extends State<ScreenContent> {
                       },
                       child: _leftPanelListTile(
                           blog.uid, blog.title, isHovering)));
+            },
+          ),
+          const SizedBox(height: 20),
+          Text("Remote Blogs", style: GoogleFonts.spaceGrotesk(fontSize: 16)),
+          FutureBuilder<QuerySnapshot>(
+            future: _blogsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final docs = snapshot.data?.docs ?? [];
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: docs.length,
+                itemBuilder: (context, index) {
+                  final blog = docs[index].data() as Map<String, dynamic>;
+                  if (localBlogs.containsKey(blog['uid'])) {
+                    return const SizedBox.shrink();
+                  }
+                  return GestureDetector(
+                    onTap: () {
+                      context.read<BlogBloc>().add(
+                            ContentChanged(
+                              title: blog['title'],
+                              content: blog['content'],
+                            ),
+                          );
+                      context.go(
+                        '${AppRouterConstants.newblog}/${blog['uid']}',
+                        extra: {
+                          'title': blog['title'],
+                          'content': blog['content'],
+                          'htmlPreview': blog['htmlPreview'],
+                          'shouldRefresh': true, // Flag to force refresh
+                        },
+                      );
+                    },
+                    child: MouseRegion(
+                      onExit: (event) {
+                        setState(() {
+                          isHovering = false;
+                        });
+                      },
+                      onEnter: (event) {
+                        setState(() {
+                          isHovering = true;
+                        });
+                      },
+                      child: _leftPanelListTile(
+                        blog['uid'],
+                        blog['title'] ?? 'Untitled',
+                        false,
+                      ),
+                    ),
+                  );
+                },
+              );
             },
           ),
         ],
@@ -359,12 +438,13 @@ class _ScreenContentState extends State<ScreenContent> {
                       h2: GoogleFonts.robotoMono(fontSize: 24),
                       h3: GoogleFonts.robotoMono(fontSize: 20),
                       code: GoogleFonts.firaCode(
-                        backgroundColor: Colors.grey[900],
-                        color: Colors.grey[300],
+                        backgroundColor:
+                            isDark ? Colors.grey[900] : Colors.grey[300],
+                        color: isDark ? Colors.grey[300] : Colors.grey[900],
                         fontSize: 16,
                       ),
                       codeblockDecoration: BoxDecoration(
-                        color: Colors.grey[900],
+                        color: isDark ? Colors.grey[900] : Colors.grey[300],
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: Colors.grey[700]!,
@@ -494,8 +574,8 @@ class _EditorScreenState extends State<EditorScreen> {
                     maxLines: null,
                     cursorColor: AppColors.primaryLight,
                     style: GoogleFonts.robotoMono(
-                        fontSize: context.isMobile ? 24 : 30,
-                        fontWeight: FontWeight.bold),
+                        fontSize: context.isMobile ? 22 : 28,
+                        fontWeight: FontWeight.w500),
                     decoration: InputDecoration(
                       hintText: 'Article Title..',
                       hintStyle: GoogleFonts.robotoMono(),
@@ -525,8 +605,8 @@ class _EditorScreenState extends State<EditorScreen> {
                         keyboardType: TextInputType.multiline,
                         cursorColor: AppColors.primaryLight,
                         style: GoogleFonts.robotoMono(
-                            fontSize: context.isMobile ? 14 : 18,
-                            fontWeight: FontWeight.bold),
+                            fontSize: context.isMobile ? 12 : 16,
+                            fontWeight: FontWeight.w500),
                         decoration: InputDecoration(
                           hintText: 'Start writing markdown here..',
                           hintStyle: GoogleFonts.robotoMono(),

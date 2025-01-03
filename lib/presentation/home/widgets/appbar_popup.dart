@@ -1,4 +1,6 @@
+import 'package:blog/common/router/app_router.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 Widget appBarInfoPopup(
@@ -46,6 +48,29 @@ Widget appBarInfoPopup(
                       color: isDark ? Colors.grey[300] : Colors.grey[600],
                       fontSize: 18),
                 ),
+              ],
+            ),
+          ),
+        ),
+        PopupMenuItem<String>(
+          onTap: () =>
+              context.go('${AppRouterConstants.profile}/@$username', extra: {
+            'email': email,
+            'name': name,
+            'userUid': id,
+            'username': username,
+          }),
+          enabled: true,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8),
+            child: Row(
+              children: [
+                const Icon(Icons.supervised_user_circle_rounded),
+                const SizedBox(width: 10),
+                Text(
+                  'Go to Profile',
+                  style: GoogleFonts.spaceGrotesk(),
+                )
               ],
             ),
           ),

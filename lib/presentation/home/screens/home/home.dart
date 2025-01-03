@@ -12,6 +12,7 @@ import 'package:blog/presentation/home/widgets/appbar_popup.dart';
 import 'package:blog/presentation/landing/landing.dart';
 import 'package:blog/responsive/responsive_layout.dart';
 import 'package:blog/service_locator.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -79,7 +80,9 @@ class _HomeState extends State<Home> {
                       flex: 1,
                       child: _firstHalf(context.isDark, context.isMobile,
                           context, state.userEntity.id)),
-                  Expanded(flex: 1, child: _secondHalf(context.isDark)),
+                  Expanded(
+                      flex: 1,
+                      child: _secondHalf(context.isDark, state.userEntity.id)),
                 ],
               ),
               desktopWidget: Row(
@@ -90,7 +93,9 @@ class _HomeState extends State<Home> {
                       flex: 1,
                       child: _firstHalf(context.isDark, context.isMobile,
                           context, state.userEntity.id)),
-                  Expanded(flex: 1, child: _secondHalf(context.isDark)),
+                  Expanded(
+                      flex: 1,
+                      child: _secondHalf(context.isDark, state.userEntity.id)),
                 ],
               ),
             ));
@@ -130,6 +135,7 @@ class _HomeState extends State<Home> {
                 context.go(
                   '${AppRouterConstants.newblog}/$blogUid',
                   extra: {
+                    'userUid': userUid,
                     'title': '',
                     'content': '',
                     'htmlPreview': '',
@@ -144,48 +150,104 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget _secondHalf(bool isDark) {
-    return Center(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Your Blogs and drafts',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.spaceGrotesk(fontSize: 34),
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            ListView.builder(
-              shrinkWrap: true,
-              itemCount: localBlogs.length,
-              itemBuilder: (context, index) {
-                print(localBlogs.length);
-                final blog = localBlogs.values.elementAt(index);
-                return ListTile(
-                  title: Text(blog.uid),
-                  subtitle: Text(blog.title),
-                  onTap: () {
-                    final extraData = {
-                      'title': blog.title,
-                      'content': blog.content,
-                      'htmlPreview': blog.htmlPreview
-                    };
-                    // print('Sending data: $extraData'); // Debug print
+  Widget _secondHalf(bool isDark, String userUid) {
+    return SingleChildScrollView(
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Your Blogs and drafts',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.spaceGrotesk(fontSize: 34),
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+              Text("Locally Available Blogs",
+                  style: GoogleFonts.spaceGrotesk(fontSize: 18)),
+              ListView.builder(
+                shrinkWrap: true,
+                itemCount: localBlogs.length,
+                itemBuilder: (context, index) {
+                  print(localBlogs.length);
+                  final blog = localBlogs.values.elementAt(index);
+                  return ListTile(
+                    title: Text(blog.uid),
+                    subtitle: Text(blog.title),
+                    onTap: () {
+                      final extraData = {
+                        'title': blog.title,
+                        'content': blog.content,
+                        'htmlPreview': blog.htmlPreview,
+                        'userUid': blog.userUid
+                      };
+                      // print('Sending data: $extraData'); // Debug print
+                      context.go(
+                        '${AppRouterConstants.newblog}/${blog.uid}',
+                        extra: extraData,
+                      );
+                    },
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+              Text("Remote Blogs",
+                  style: GoogleFonts.spaceGrotesk(fontSize: 18)),
+              FutureBuilder<QuerySnapshot>(
+                future: FirebaseFirestore.instance
+                    .collection('Users')
+                    .doc(userUid)
+                    .collection('Blogs')
+                    .get(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                    context.go(
-                      '${AppRouterConstants.newblog}/${blog.uid}',
-                      extra: extraData,
-                    );
-                  },
-                );
-              },
-            ),
-          ],
+                  if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
+                  }
+
+                  final docs = snapshot.data?.docs ?? [];
+                  if (docs.isEmpty) {
+                    return const Center(child: Text('No remote blogs found'));
+                  }
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: docs.length,
+                    itemBuilder: (context, index) {
+                      final blog = docs[index].data() as Map<String, dynamic>;
+                      if (localBlogs.keys.toList().contains(blog['uid'])) {
+                        return const SizedBox.shrink();
+                      }
+                      return ListTile(
+                        title: Text(blog['uid']),
+                        subtitle: Text(blog['title']),
+                        onTap: () {
+                          final extraData = {
+                            'title': blog['title'],
+                            'content': blog['content'],
+                            'htmlPreview': blog['htmlPreview'],
+                            'userUid': userUid
+                          };
+                          // print('Sending data: $extraData'); // Debug print
+                          context.go(
+                            '${AppRouterConstants.newblog}/${blog['uid']}',
+                            extra: extraData,
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
