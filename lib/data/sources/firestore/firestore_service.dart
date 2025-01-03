@@ -1,4 +1,5 @@
-import 'package:blog/data/models/profile/profile_model.dart';
+import 'package:blog/data/models/firestore/follow_model.dart';
+import 'package:blog/data/models/firestore/profile_model.dart';
 import 'package:blog/domain/entities/profile/profile_entity.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
@@ -6,6 +7,7 @@ import 'package:dartz/dartz.dart';
 abstract class FirestoreService {
   Future<Either<String, ProfileEntity>> getProfileData(
       ProfileModel profileModel);
+  Future<Either> follow(FollowModel followModel);
 }
 
 class FirestoreServiceImplementation extends FirestoreService {
@@ -49,6 +51,63 @@ class FirestoreServiceImplementation extends FirestoreService {
       }
     } catch (e) {
       return Left('Firestore Error ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Either> follow(FollowModel followModel) async {
+    try {
+      final batch = FirebaseFirestore.instance.batch();
+
+      final followerDoc = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(followModel.followerUid)
+          .get();
+
+      final followingDoc = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(followModel.followingUid)
+          .get();
+
+      if (!followerDoc.exists || !followingDoc.exists) {
+        return const Left('One or both profiles not found');
+      }
+
+      final followerData = followerDoc.data() as Map<String, dynamic>;
+      final followingData = followingDoc.data() as Map<String, dynamic>;
+
+      List following = followerData['following'] ?? [];
+      List followers = followingData['followers'] ?? [];
+
+      if (following.contains(followModel.followingUsername)) {
+        return const Left('Already following this user');
+      }
+
+      batch.update(
+        FirebaseFirestore.instance
+            .collection('Users')
+            .doc(followModel.followerUid),
+        {
+          'following': [...following, followModel.followingUsername],
+          'followingCount': FieldValue.increment(1),
+        },
+      );
+
+      batch.update(
+        FirebaseFirestore.instance
+            .collection('Users')
+            .doc(followModel.followingUid),
+        {
+          'followers': [...followers, followModel.followerUsername],
+          'followerCount': FieldValue.increment(1),
+        },
+      );
+
+      await batch.commit();
+      print('followed @${followModel.followingUsername} successfully');
+      return const Right('Followed Successfully');
+    } catch (e) {
+      return Left('Firestore Error: ${e.toString()}');
     }
   }
 }

@@ -4,6 +4,7 @@ import 'package:blog/presentation/home/screens/home/home.dart';
 import 'package:blog/presentation/home/screens/new_blog/screen/blog_editor.dart';
 import 'package:blog/presentation/landing/landing.dart';
 import 'package:blog/presentation/profile/screen/profile_page.dart';
+import 'package:blog/presentation/users/screen/users.dart';
 import 'package:go_router/go_router.dart';
 
 class AppRouterConstants {
@@ -17,6 +18,7 @@ class AppRouter {
     GoRoute(path: '/signup', builder: (context, state) => const SignUp()),
     GoRoute(path: '/signin', builder: (context, state) => SignIn()),
     GoRoute(path: '/login', builder: (context, state) => SignIn()),
+    GoRoute(path: '/users', builder: (context, state) => const Users()),
     GoRoute(
         path: '${AppRouterConstants.newblog}/:uid',
         builder: (context, state) {

@@ -13,6 +13,7 @@ import 'package:blog/domain/services/markdown_service.dart';
 import 'package:blog/domain/usecases/auth/logout_usecase.dart';
 import 'package:blog/domain/usecases/auth/signin_usecase.dart';
 import 'package:blog/domain/usecases/auth/signup_usecase.dart';
+import 'package:blog/domain/usecases/firestore/follow_usecase.dart';
 import 'package:blog/domain/usecases/firestore/get_profile_usecase.dart';
 import 'package:blog/domain/usecases/hive/add_usecase.dart';
 import 'package:blog/domain/usecases/hive/get_all_usecase.dart';
@@ -58,8 +59,9 @@ void getDependencies() {
   sl.registerLazySingleton<UpdateUsecase>(() => UpdateUsecase());
   sl.registerLazySingleton<GetAllUsecase>(() => GetAllUsecase());
 
-  //hive usecases
+  //firestore usecases
   sl.registerLazySingleton<GetProfileUsecase>(() => GetProfileUsecase());
+  sl.registerLazySingleton<FollowUsecase>(() => FollowUsecase());
 
   // Services
   sl.registerLazySingleton<MarkdownService>(

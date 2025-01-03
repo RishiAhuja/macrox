@@ -11,6 +11,7 @@ class BasicButton extends StatelessWidget {
   final bool? dynamic;
   final double? width;
   final Widget? customWidget;
+  final bool? enableBorder;
   const BasicButton(
       {super.key,
       this.onPressed,
@@ -18,7 +19,8 @@ class BasicButton extends StatelessWidget {
       this.color,
       this.dynamic,
       this.width,
-      this.customWidget});
+      this.customWidget,
+      this.enableBorder});
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -31,11 +33,20 @@ class BasicButton extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
-                    color: color ??
-                        (context.isDark
-                            ? AppColors.primaryDark
-                            : AppColors.primaryLight),
-                    borderRadius: BorderRadius.circular(4)),
+                  color: color ??
+                      (context.isDark
+                          ? AppColors.primaryDark
+                          : AppColors.primaryLight),
+                  borderRadius: BorderRadius.circular(4),
+                  // border: Border.all(
+                  //     width: 10,
+                  //     color: (enableBorder ?? false)
+                  //         ? color ??
+                  //             (context.isDark
+                  //                 ? AppColors.primaryDark
+                  //                 : AppColors.primaryLight)
+                  //         : Colors.transparent)
+                ),
                 child: customWidget ??
                     Text(
                       text ?? 'Button',
@@ -52,6 +63,13 @@ class BasicButton extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
+                    // border: Border.all(
+                    //     color: (enableBorder ?? false)
+                    //         ? color ??
+                    //             (context.isDark
+                    //                 ? AppColors.primaryDark
+                    //                 : AppColors.primaryLight)
+                    //         : Colors.transparent),
                     color: color ??
                         (context.isDark
                             ? AppColors.primaryDark

@@ -55,6 +55,9 @@ dependencies:
   hive_flutter:
   uuid:
   animated_snack_bar:
+  flutter_advanced_avatar:
+  intl:
+  firebase_pagination:
 
 dev_dependencies:
   flutter_test:

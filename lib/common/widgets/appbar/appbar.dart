@@ -1,10 +1,12 @@
 import 'package:blog/common/widgets/appbar/basic_button.dart';
+import 'package:blog/common/widgets/appbar/nav_item.dart';
 import 'package:blog/core/configs/theme/app_colors.dart';
 import 'package:blog/presentation/theme_shift/bloc/theme_cubit.dart';
 import 'package:blog/presentation/theme_shift/widget/theme_button.dart';
 import 'package:blog/responsive/responsive_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class BasicAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -22,6 +24,7 @@ class BasicAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<ThemeCubit, ThemeMode>(
       builder: (context, state) {
+        final currentPath = GoRouterState.of(context).uri.toString();
         return ResponsiveLayout(
           desktopWidget: AppBar(
             elevation: 0,
@@ -35,13 +38,26 @@ class BasicAppBar extends StatelessWidget implements PreferredSizeWidget {
                   style: GoogleFonts.robotoMono(fontSize: 18),
                 ),
                 const SizedBox(width: 60),
-                Text('Home', style: GoogleFonts.robotoMono(fontSize: 18)),
+                NavItem(
+                  label: 'Home',
+                  isActive: currentPath == '/home',
+                  onTap: () {
+                    if (currentPath != '/home') {
+                      context.go('/home');
+                    }
+                  },
+                ),
                 const SizedBox(width: 20),
-                Text('Users', style: GoogleFonts.robotoMono(fontSize: 18)),
+                NavItem(
+                  label: 'Users',
+                  isActive: currentPath == '/users',
+                  onTap: () => context.go('/users'),
+                ),
                 const SizedBox(width: 20),
-                Text(
-                  'Explore',
-                  style: GoogleFonts.robotoMono(fontSize: 18),
+                NavItem(
+                  label: 'Explore',
+                  isActive: currentPath == '/explore',
+                  onTap: () => context.go('/explore'),
                 ),
               ],
             ),

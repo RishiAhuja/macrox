@@ -1,7 +1,7 @@
-import 'package:blog/data/models/profile/profile_model.dart';
+import 'package:blog/data/models/firestore/profile_model.dart';
 import 'package:blog/domain/usecases/firestore/get_profile_usecase.dart';
-import 'package:blog/presentation/profile/bloc/profile_event.dart';
-import 'package:blog/presentation/profile/bloc/profile_state.dart';
+import 'package:blog/presentation/profile/bloc/profile_data_bloc/profile_event.dart';
+import 'package:blog/presentation/profile/bloc/profile_data_bloc/profile_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {

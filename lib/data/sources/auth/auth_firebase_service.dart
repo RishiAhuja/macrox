@@ -38,6 +38,11 @@ class AuthFirebaseServiceImplementation extends AuthFirebaseService {
           email: signinUserRequest.email,
           name: (docSnapshot.data())!['name'],
           id: FirebaseAuth.instance.currentUser!.uid);
+
+      await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .update({'lastLogin': FieldValue.serverTimestamp()});
       return Right(userEntity);
     } on FirebaseAuthException catch (e) {
       String message = '';
