@@ -4,20 +4,26 @@ import 'package:blog/data/models/auth/no_params.dart';
 import 'package:blog/domain/usecases/auth/logout_usecase.dart';
 import 'package:blog/domain/usecases/auth/signin_usecase.dart';
 import 'package:blog/domain/usecases/auth/signup_usecase.dart';
+import 'package:blog/domain/usecases/hive/clear_data_usecase.dart';
 import 'package:blog/presentation/auth/bloc/auth_event.dart';
 import 'package:blog/presentation/auth/bloc/auth_state.dart';
+import 'package:hive/hive.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
+
+import '../../../core/configs/constants/hive_constants/hive_constants.dart';
 
 class AuthBloc extends HydratedBloc<AuthEvent, AuthState> {
   final SignupUsecase _signUpUseCase;
   final SigninUsecase _signInUseCase;
   final LogoutUsecase _logoutUseCase;
+  final ClearDataUsecase _clearDataUsecase;
 
   AuthBloc(SignupUsecase signupUsecase, SigninUsecase signInUsecase,
-      LogoutUsecase logoutUsecase)
+      LogoutUsecase logoutUsecase, ClearDataUsecase clearDataUsecase)
       : _signUpUseCase = signupUsecase,
         _signInUseCase = signInUsecase,
         _logoutUseCase = logoutUsecase,
+        _clearDataUsecase = clearDataUsecase,
         super(AuthInitial()) {
     on<SignUpRequested>(_onSignUpRequested);
     on<SignInRequested>(_onSignInRequested);
@@ -44,6 +50,8 @@ class AuthBloc extends HydratedBloc<AuthEvent, AuthState> {
         username: event.username);
 
     final result = await _signUpUseCase(params: userRequest);
+    final hiveDeletion = await _clearDataUsecase();
+    print('hiveDeletion: $hiveDeletion');
 
     result.fold(
       (failure) => emit(AuthError(errorMessage: failure)), // Handle failure
@@ -59,6 +67,9 @@ class AuthBloc extends HydratedBloc<AuthEvent, AuthState> {
         LoginUserRequest(email: event.email, password: event.password);
 
     final result = await _signInUseCase(params: loginUserRequest);
+
+    final hiveDeletion = await _clearDataUsecase();
+    print('hiveDeletion: $hiveDeletion');
 
     result.fold(
       (failure) => emit(AuthError(errorMessage: failure)),
@@ -86,6 +97,18 @@ class AuthBloc extends HydratedBloc<AuthEvent, AuthState> {
     } catch (e) {
       print('Error storing state: $e');
       return {};
+    }
+  }
+
+  Future<void> clearHiveData() async {
+    if (Hive.isBoxOpen(HiveConstants.blogsBox)) {
+      print('blog was open clearing...');
+      var box = Hive.box(HiveConstants.blogsBox);
+      await box.clear();
+    } else {
+      print('blog was not open opening...');
+      var box = await Hive.openBox(HiveConstants.blogsBox);
+      await box.clear();
     }
   }
 }

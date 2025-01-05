@@ -6,6 +6,7 @@ abstract class HiveService {
   Future<void> addBlog(BlogEntity entity);
   Future<void> updateBlog(BlogEntity entity);
   Future<Map<String, BlogEntity>> getAllBlogs();
+  Future<int> clearBox();
 }
 
 class HiveServiceImpl extends HiveService {
@@ -55,5 +56,10 @@ class HiveServiceImpl extends HiveService {
       userUid: entity.userUid,
     );
     await blogBox.put(entity.uid, blogModel);
+  }
+
+  @override
+  Future<int> clearBox() async {
+    return await blogBox.clear();
   }
 }

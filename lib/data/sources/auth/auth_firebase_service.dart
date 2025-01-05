@@ -1,3 +1,4 @@
+import 'package:blog/core/configs/constants/app_constants/constants.dart';
 import 'package:blog/data/models/auth/login_user_request.dart';
 import 'package:blog/data/models/auth/no_params.dart';
 import 'package:blog/domain/entities/auth/user_entity.dart';
@@ -101,6 +102,7 @@ class AuthFirebaseServiceImplementation extends AuthFirebaseService {
         },
         'emailVerified': false,
         'lastLogin': FieldValue.serverTimestamp(),
+        'subdomain': '${request.username}.${Constants.domain}',
       });
 
       // Reserve username

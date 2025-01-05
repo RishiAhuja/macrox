@@ -21,10 +21,46 @@
   },
   "hosting": {
     "public": "build/web",
+    "rewrites": [
+      {
+        "source": "**",
+        "function": "handleSubdomain"
+      }
+    ],
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
-    ]
-  }
+    ],
+    "headers": [
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "Content-Security-Policy",
+            "value": "default-src * 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' data: blob: gap: ws: wss: https: http:; script-src * 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data: https: http:; style-src * 'self' 'unsafe-inline' https: http:; img-src * 'self' data: blob: https: http:; connect-src * 'self' https: http: ws: wss:;"
+          },
+          {
+            "key": "Access-Control-Allow-Origin",
+            "value": "*"
+          }
+        ]
+      }
+    ],
+    "ssl": true,
+    "trailingSlash": false
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ]
 }

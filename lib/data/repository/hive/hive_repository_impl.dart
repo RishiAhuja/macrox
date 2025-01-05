@@ -19,4 +19,9 @@ class BlogRepositoryImplementation extends BlogRepository {
   Future<void> updateBlog(BlogEntity entity) {
     return hiveService.updateBlog(entity);
   }
+
+  @override
+  Future<int> clearBox() {
+    return hiveService.clearBox();
+  }
 }

@@ -1,7 +1,7 @@
 import 'package:blog/presentation/auth/screens/signin.dart';
 import 'package:blog/presentation/auth/screens/signup.dart';
 import 'package:blog/presentation/home/screens/home/home.dart';
-import 'package:blog/presentation/home/screens/new_blog/screen/blog_editor.dart';
+import 'package:blog/presentation/home/screens/blog_editor/screen/blog_editor.dart';
 import 'package:blog/presentation/landing/landing.dart';
 import 'package:blog/presentation/profile/screen/profile_page.dart';
 import 'package:blog/presentation/users/screen/users.dart';

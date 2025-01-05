@@ -1,6 +1,6 @@
 import 'package:blog/domain/entities/auth/user_entity.dart';
 
-abstract class AuthState {
+sealed class AuthState {
   AuthState();
   factory AuthState.fromMap(Map<String, dynamic> map) {
     switch (map['type']) {

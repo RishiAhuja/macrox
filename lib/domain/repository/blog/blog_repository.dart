@@ -4,4 +4,5 @@ abstract class BlogRepository {
   Future<void> addBlog(BlogEntity entity);
   Future<void> updateBlog(BlogEntity entity);
   Future<Map<String, BlogEntity>> getAllBlogs();
+  Future<int> clearBox();
 }

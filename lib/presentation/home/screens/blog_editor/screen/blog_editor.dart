@@ -8,19 +8,27 @@ import 'package:blog/domain/entities/blog/blog_entity.dart';
 import 'package:blog/domain/usecases/hive/get_all_usecase.dart';
 import 'package:blog/presentation/auth/bloc/auth_bloc.dart';
 import 'package:blog/presentation/auth/bloc/auth_state.dart';
-import 'package:blog/presentation/home/screens/new_blog/bloc/blog_bloc.dart';
-import 'package:blog/presentation/home/screens/new_blog/bloc/blog_event.dart';
-import 'package:blog/presentation/home/screens/new_blog/bloc/blog_state.dart';
+import 'package:blog/presentation/home/screens/blog_editor/bloc/blog/blog_bloc.dart';
+import 'package:blog/presentation/home/screens/blog_editor/bloc/blog/blog_event.dart';
+import 'package:blog/presentation/home/screens/blog_editor/bloc/blog/blog_state.dart';
+import 'package:blog/presentation/home/screens/blog_editor/bloc/image/image_bloc.dart';
+import 'package:blog/presentation/home/screens/blog_editor/bloc/image/image_event.dart';
+import 'package:blog/presentation/home/screens/blog_editor/bloc/image/image_state.dart';
+import 'package:blog/presentation/home/screens/blog_editor/bloc/upload/upload_bloc.dart';
+import 'package:blog/presentation/home/screens/blog_editor/screen/upload_dialog.dart';
 import 'package:blog/presentation/home/widgets/appbar_popup.dart';
 import 'package:blog/responsive/responsive_layout.dart';
 import 'package:blog/service_locator.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:ui' as ui;
+import 'dart:html' as html show IFrameElement;
 
 class BlogEditor extends StatelessWidget {
   final String uid;
@@ -38,8 +46,15 @@ class BlogEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<BlogBloc>(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => sl<BlogBloc>(),
+        ),
+        BlocProvider(
+          create: (context) => sl<ImageBloc>(),
+        ),
+      ],
       child: ScreenContent(
         uid: uid,
         title: title,
@@ -432,6 +447,30 @@ class _ScreenContentState extends State<ScreenContent> {
                   child: Markdown(
                     data: state.content,
                     selectable: true,
+                    imageBuilder: (Uri uri, String? title, String? alt) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: 400,
+                            maxWidth: MediaQuery.of(context).size.width * 0.8,
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              uri.toString(),
+                              loadingBuilder: (_, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return const Center(
+                                    child: CircularProgressIndicator());
+                              },
+                              errorBuilder: (_, error, __) =>
+                                  const Icon(Icons.error),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                     styleSheet: MarkdownStyleSheet(
                       p: GoogleFonts.robotoMono(),
                       h1: GoogleFonts.robotoMono(fontSize: 30),
@@ -662,79 +701,201 @@ class _EditorScreenState extends State<EditorScreen> {
                             ? AppColors.darkLightBackground
                             : AppColors.lightLightBackground,
                         borderRadius: BorderRadius.circular(10)),
-                    child: TextFormField(
-                      controller: _additionController,
-                      onFieldSubmitted: (value) {
-                        String modifiedValue = value;
+                    child: dropdownValue == 'image'
+                        ? _imagePicker()
+                        : TextFormField(
+                            controller: _additionController,
+                            onFieldSubmitted: (value) {
+                              String modifiedValue = value;
 
-                        if (dropdownValue == 'p') {
-                          modifiedValue = '\n\n$value';
-                        }
-                        if (dropdownValue == 'h1') {
-                          modifiedValue = '\n\n# $value';
-                        }
-                        if (dropdownValue == 'h2') {
-                          modifiedValue = '\n\n## $value';
-                        }
-                        if (dropdownValue == 'h3') {
-                          modifiedValue = '\n\n### $value';
-                        }
-                        if (dropdownValue == 'code') {
-                          modifiedValue = '\n\n``` \n$value\n ```';
-                        }
-                        if (dropdownValue == 'quote') {
-                          modifiedValue = '\n\n> $value';
-                        }
-                        if (dropdownValue == 'ul') {
-                          modifiedValue = '\n- $value';
-                        }
-                        if (dropdownValue == 'bold') {
-                          modifiedValue = '\n**$value**';
-                        }
-                        if (dropdownValue == 'italic') {
-                          modifiedValue = '\n$value*';
-                        }
-                        if (dropdownValue == 'strike') {
-                          modifiedValue = '\n~~$value~~';
-                        }
-                        if (dropdownValue == 'Ctask') {
-                          modifiedValue = '\n- [ ] $value';
-                        }
-                        if (dropdownValue == 'UCtask') {
-                          modifiedValue = '\n- [x] $value';
-                        }
+                              if (dropdownValue == 'p') {
+                                modifiedValue = '\n\n$value';
+                              }
+                              if (dropdownValue == 'h1') {
+                                modifiedValue = '\n\n# $value';
+                              }
+                              if (dropdownValue == 'h2') {
+                                modifiedValue = '\n\n## $value';
+                              }
+                              if (dropdownValue == 'h3') {
+                                modifiedValue = '\n\n### $value';
+                              }
+                              if (dropdownValue == 'code') {
+                                modifiedValue = '\n\n``` \n$value\n ```';
+                              }
+                              if (dropdownValue == 'quote') {
+                                modifiedValue = '\n\n> $value';
+                              }
+                              if (dropdownValue == 'ul') {
+                                modifiedValue = '\n- $value';
+                              }
+                              if (dropdownValue == 'bold') {
+                                modifiedValue = '\n**$value**';
+                              }
+                              if (dropdownValue == 'italic') {
+                                modifiedValue = '\n$value*';
+                              }
+                              if (dropdownValue == 'strike') {
+                                modifiedValue = '\n~~$value~~';
+                              }
+                              if (dropdownValue == 'Ctask') {
+                                modifiedValue = '\n- [ ] $value';
+                              }
+                              if (dropdownValue == 'UCtask') {
+                                modifiedValue = '\n- [x] $value';
+                              }
 
-                        setState(() {
-                          _contentController.text += modifiedValue;
-                          content += modifiedValue;
-                          _additionController.clear();
-                        });
-                        print(content);
-                        context.read<BlogBloc>().add(ContentChanged(
-                            content: content,
-                            title: _articleController.text.trim()));
-                      },
-                      cursorColor: AppColors.primaryLight,
-                      style: GoogleFonts.robotoMono(
-                          fontSize: 18, fontWeight: FontWeight.w500),
-                      decoration: InputDecoration(
-                        hintText: 'Write content based on selected markdown..',
-                        hintStyle: GoogleFonts.robotoMono(),
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        errorBorder: InputBorder.none,
-                        disabledBorder: InputBorder.none,
-                        contentPadding:
-                            const EdgeInsets.only(left: 15, right: 15),
-                      ),
-                    ),
+                              setState(() {
+                                _contentController.text += modifiedValue;
+                                content += modifiedValue;
+                                _additionController.clear();
+                              });
+                              print(content);
+                              context.read<BlogBloc>().add(ContentChanged(
+                                  content: content,
+                                  title: _articleController.text.trim()));
+                            },
+                            cursorColor: AppColors.primaryLight,
+                            style: GoogleFonts.robotoMono(
+                                fontSize: 18, fontWeight: FontWeight.w500),
+                            decoration: InputDecoration(
+                              hintText:
+                                  'Write content based on selected markdown..',
+                              hintStyle: GoogleFonts.robotoMono(),
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              disabledBorder: InputBorder.none,
+                              contentPadding:
+                                  const EdgeInsets.only(left: 15, right: 15),
+                            ),
+                          ),
                   ))
             ],
           ),
         )
       ],
     );
+  }
+
+  Widget _dummySend() {
+    return Opacity(
+      opacity: 0,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(50),
+            border: Border.all(
+              width: .5,
+            )),
+        child: const Icon(Icons.send),
+      ),
+    );
+  }
+
+  Widget _imagePicker() {
+    return BlocBuilder<ImageBloc, ImageState>(
+      builder: (context, state) {
+        if (state is ImageLoading) {
+          return Text(
+            'Waiting for you to pick image',
+            style: GoogleFonts.robotoMono(),
+          );
+        }
+        if (state is ImagePicked) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _dummySend(),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(state.image.name, style: GoogleFonts.robotoMono()),
+                  TextButton(
+                    onPressed: () =>
+                        context.read<ImageBloc>().add(PickImageEvent()),
+                    child: Text('Change Image',
+                        style: GoogleFonts.robotoMono(
+                            color: AppColors.primaryLight)),
+                  ),
+                ],
+              ),
+              InkWell(
+                onTap: () {
+                  handleImageUpload(context, state);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                      color: AppColors.darkBackground,
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(
+                          width: .5,
+                          color: context.isDark
+                              ? Colors.grey[500] ?? Colors.grey
+                              : Colors.grey[800] ?? Colors.grey)),
+                  child: Icon(Icons.upload_file,
+                      color: context.isDark
+                          ? Colors.grey[500] ?? Colors.grey
+                          : Colors.grey[800] ?? Colors.grey),
+                ),
+              )
+            ],
+          );
+        }
+        if (state is ImageError) {
+          return Row(
+            children: [
+              Text(state.message, style: GoogleFonts.robotoMono()),
+              IconButton(
+                  onPressed: () {
+                    context.read<ImageBloc>().add(PickImageEvent());
+                  },
+                  icon: const Icon(Icons.refresh))
+            ],
+          );
+        }
+        return InkWell(
+          onTap: () => context.read<ImageBloc>().add(PickImageEvent()),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.add),
+              const SizedBox(
+                height: 10,
+              ),
+              Text('Add Image from device', style: GoogleFonts.robotoMono())
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void handleImageUpload(BuildContext context, state) async {
+    final String? uploadedImageUrl = await showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => BlocProvider(
+            create: (context) => sl<UploadBloc>(),
+            child: UploadDialog(
+                imageExtension: (state.image.name).split('.').last,
+                byteSize: (state.image.bytes!.length / 1024),
+                fileBytes: state.image.bytes!,
+                username: (context.read<AuthBloc>().state as AuthSuccess)
+                    .userEntity
+                    .username)));
+
+    if (uploadedImageUrl != null) {
+      _contentController.text += '![]($uploadedImageUrl)';
+      content += '![]($uploadedImageUrl)';
+      if (context.mounted) {
+        context.read<BlogBloc>().add(ContentChanged(
+            content: content, title: _articleController.text.trim()));
+        context.read<ImageBloc>().add(ResetImageEvent());
+      }
+    }
   }
 
   Widget _dropDownButton(bool isMobile) {
@@ -763,7 +924,8 @@ class _EditorScreenState extends State<EditorScreen> {
         'italic',
         'strike',
         'Ctask',
-        'UCtask'
+        'UCtask',
+        'image'
       ].map<DropdownMenuItem<String>>((String value) {
         return _dropDownItem(value, isMobile);
       }).toList(),
