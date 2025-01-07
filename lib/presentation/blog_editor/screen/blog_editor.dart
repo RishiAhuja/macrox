@@ -1,34 +1,37 @@
-import 'package:animated_snack_bar/animated_snack_bar.dart';
 import 'package:blog/common/helper/extensions/is_dark.dart';
 import 'package:blog/common/helper/extensions/is_mobile.dart';
 import 'package:blog/common/router/app_router.dart';
+import 'package:blog/common/widgets/animated_popup/animated_popup.dart';
 import 'package:blog/common/widgets/appbar/blog_editor_appbar.dart';
 import 'package:blog/core/configs/theme/app_colors.dart';
+import 'package:blog/data/models/firestore/blog_publish_model.dart';
 import 'package:blog/domain/entities/blog/blog_entity.dart';
 import 'package:blog/domain/usecases/hive/get_all_usecase.dart';
 import 'package:blog/presentation/auth/bloc/auth_bloc.dart';
 import 'package:blog/presentation/auth/bloc/auth_state.dart';
-import 'package:blog/presentation/home/screens/blog_editor/bloc/blog/blog_bloc.dart';
-import 'package:blog/presentation/home/screens/blog_editor/bloc/blog/blog_event.dart';
-import 'package:blog/presentation/home/screens/blog_editor/bloc/blog/blog_state.dart';
-import 'package:blog/presentation/home/screens/blog_editor/bloc/image/image_bloc.dart';
-import 'package:blog/presentation/home/screens/blog_editor/bloc/image/image_event.dart';
-import 'package:blog/presentation/home/screens/blog_editor/bloc/image/image_state.dart';
-import 'package:blog/presentation/home/screens/blog_editor/bloc/upload/upload_bloc.dart';
-import 'package:blog/presentation/home/screens/blog_editor/screen/upload_dialog.dart';
+import 'package:blog/presentation/blog_editor/bloc/blog/blog_bloc.dart';
+import 'package:blog/presentation/blog_editor/bloc/blog/blog_event.dart';
+import 'package:blog/presentation/blog_editor/bloc/blog/blog_state.dart';
+import 'package:blog/presentation/blog_editor/bloc/image/image_bloc.dart';
+import 'package:blog/presentation/blog_editor/bloc/image/image_event.dart';
+import 'package:blog/presentation/blog_editor/bloc/image/image_state.dart';
+import 'package:blog/presentation/blog_editor/bloc/publish/publish_bloc.dart';
+import 'package:blog/presentation/blog_editor/bloc/publish/publish_event.dart';
+import 'package:blog/presentation/blog_editor/bloc/publish/publish_state.dart';
+import 'package:blog/presentation/blog_editor/bloc/upload/upload_bloc.dart';
+import 'package:blog/presentation/blog_editor/screen/upload_dialog.dart';
 import 'package:blog/presentation/home/widgets/appbar_popup.dart';
 import 'package:blog/responsive/responsive_layout.dart';
 import 'package:blog/service_locator.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'dart:ui' as ui;
-import 'dart:html' as html show IFrameElement;
 
 class BlogEditor extends StatelessWidget {
   final String uid;
@@ -54,6 +57,7 @@ class BlogEditor extends StatelessWidget {
         BlocProvider(
           create: (context) => sl<ImageBloc>(),
         ),
+        BlocProvider(create: (context) => sl<PublishBloc>())
       ],
       child: ScreenContent(
         uid: uid,
@@ -86,25 +90,35 @@ class ScreenContent extends StatefulWidget {
 
 class _ScreenContentState extends State<ScreenContent> {
   late Future<QuerySnapshot> _blogsFuture;
+  late ConfettiController _controllerCenter;
   Map<String, BlogEntity> localBlogs = {};
   bool isLoading = true;
   int currentIndex = 1;
   bool isHovering = false;
+  String? selectedValue;
 
   @override
   void initState() {
+    super.initState();
+    _controllerCenter =
+        ConfettiController(duration: const Duration(seconds: 10));
     context.read<BlogBloc>().add(ContentChanged(
           title: widget.title ?? '',
           content: widget.content ?? '',
         ));
     loadBlogs();
-    super.initState();
 
     _blogsFuture = FirebaseFirestore.instance
         .collection('Users')
         .doc(widget.userUid)
         .collection('Blogs')
         .get();
+  }
+
+  @override
+  void dispose() {
+    _controllerCenter.dispose();
+    super.dispose();
   }
 
   Future<void> loadBlogs() async {
@@ -123,6 +137,12 @@ class _ScreenContentState extends State<ScreenContent> {
     }
   }
 
+  void copyToClipboard(String text) {
+    Clipboard.setData(ClipboardData(text: text));
+    customAnimatedSnackbar(
+        context, 'Copied to clipboard', Colors.green, Icons.check_circle);
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
@@ -137,7 +157,70 @@ class _ScreenContentState extends State<ScreenContent> {
 
         return Scaffold(
           appBar: BlogEditorAppbar(
-            onBackButtonPressed: () {
+            mobileDropdown: PopupMenuButton(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+                side: BorderSide(
+                  color: context.isDark ? Colors.grey[700]! : Colors.grey[300]!,
+                  width: 1,
+                ),
+              ),
+              itemBuilder: (BuildContext context) => [
+                PopupMenuItem(
+                  value: 'CRM',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.copy),
+                      const SizedBox(
+                        width: 5,
+                      ),
+                      Text(
+                        'Copy Raw Markdown',
+                        style: GoogleFonts.robotoMono(
+                          color: context.isDark
+                              ? Colors.grey[300]
+                              : Colors.grey[800],
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'publish',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.publish_rounded),
+                      const SizedBox(
+                        width: 5,
+                      ),
+                      Text(
+                        'Publish',
+                        style: GoogleFonts.robotoMono(
+                          color: context.isDark
+                              ? Colors.grey[300]
+                              : Colors.grey[800],
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              onSelected: (value) {
+                switch (value) {
+                  case 'CRM':
+                    copyToClipboard(
+                        (context.read<BlogBloc>().state as BlogEditing)
+                            .content);
+                    break;
+                }
+              },
+              icon: const Icon(
+                  Icons.keyboard_arrow_down_rounded), // Three-dot menu icon
+            ),
+            onPressedDraft: () {
               final blogState = context.read<BlogBloc>().state;
               if (blogState is BlogEditing) {
                 context.read<BlogBloc>().add(SaveDraft(
@@ -149,10 +232,10 @@ class _ScreenContentState extends State<ScreenContent> {
               }
             },
             isMobile: context.isMobile,
-            textRepacement: BlocBuilder<BlogBloc, BlogState>(
+            draftRepacement: BlocBuilder<BlogBloc, BlogState>(
               builder: (context, state) {
                 return AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 100),
+                  duration: const Duration(milliseconds: 200),
                   child: state is BlogSaving
                       ? const SizedBox(
                           height: 20,
@@ -166,7 +249,11 @@ class _ScreenContentState extends State<ScreenContent> {
                       : Text(
                           'Save Draft',
                           style: GoogleFonts.robotoMono(
-                              color: Colors.white, fontSize: 18),
+                            color: context.isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight,
+                            fontSize: 18,
+                          ),
                         ),
                 );
               },
@@ -178,74 +265,165 @@ class _ScreenContentState extends State<ScreenContent> {
               authState.userEntity.email,
               authState.userEntity.id,
             ),
-          ),
-          body: BlocListener<BlogBloc, BlogState>(
-            listener: (context, state) {
-              if (state is BlogSavedSuccess) {
-                _animatedAppbar(context, 'Draft saved successfully',
-                    Colors.green, Icons.check_circle);
-              }
-              if (state is BlogSavedFailed) {
-                _animatedAppbar(
-                    context, 'Failed to save draft', Colors.red, Icons.error);
-              }
-            },
-            child: BlocBuilder<BlogBloc, BlogState>(
-              builder: (context, blogState) {
-                return ResponsiveLayout(
-                    mobileWidget: Center(
-                        child: CarouselSlider(
-                      options: CarouselOptions(
-                        height: MediaQuery.of(context).size.height,
-                        initialPage: currentIndex,
-                        enableInfiniteScroll: false,
-                        enlargeCenterPage: true,
-                        viewportFraction: 1.0,
-                        onPageChanged: (index, reason) {
-                          setState(() {
-                            currentIndex = index;
-                          });
-                        },
-                      ),
-                      items: [
-                        _buildLeftPanel(context.isDark),
-                        EditorScreen(
-                          uid: widget.uid,
-                          title: widget.title,
-                          content: widget.content,
-                          htmlPreview: widget.content,
+            publishRepacement: BlocBuilder<PublishBloc, PublishState>(
+                builder: (context, state) {
+              return AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: state is PublishLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
-                        _buildPreview(blogState, context.isDark)
-                      ].map((widget) {
-                        return Builder(
-                          builder: (BuildContext context) {
-                            return SizedBox(
-                              width: MediaQuery.of(context).size.width,
-                              child: widget,
-                            );
-                          },
-                        );
-                      }).toList(),
-                    )),
-                    desktopWidget: Center(
-                        child: Row(
-                      children: [
-                        Expanded(
-                            flex: 2, child: _buildLeftPanel(context.isDark)),
-                        Expanded(
-                            flex: 5,
-                            child: EditorScreen(
+                      )
+                    : Text(
+                        'Publish',
+                        style: GoogleFonts.robotoMono(
+                          color: Colors.white,
+                          fontSize: 18,
+                        ),
+                      ),
+              );
+            }),
+            onPressedPublish: () {
+              final authState = context.read<AuthBloc>().state as AuthSuccess;
+              final blogState = context.read<BlogBloc>().state as BlogEditing;
+              final String blogUid =
+                  GoRouterState.of(context).pathParameters['uid'] ?? '';
+
+              final publishModel = BlogPublishModel(
+                userUid: widget.userUid,
+                blogUid: blogUid,
+                content: blogState.content,
+                title: blogState.title,
+                authors: [authState.userEntity.username],
+                authorUid: [authState.userEntity.id],
+                likedBy: [],
+                likes: 0,
+                status: 'up',
+                publishedTimestamp: FieldValue.serverTimestamp(),
+              );
+              context
+                  .read<PublishBloc>()
+                  .add(InitiatePublishRequest(requestModel: publishModel));
+            },
+          ),
+          body: MultiBlocListener(
+            listeners: [
+              BlocListener<BlogBloc, BlogState>(
+                listener: (context, state) {
+                  if (state is BlogSavedSuccess) {
+                    customAnimatedSnackbar(context, 'Draft saved successfully',
+                        Colors.green, Icons.check_circle);
+                  }
+                  if (state is BlogSavedFailed) {
+                    customAnimatedSnackbar(context, 'Failed to save draft',
+                        Colors.red, Icons.error);
+                  }
+                },
+              ),
+              BlocListener<PublishBloc, PublishState>(
+                listener: (context, state) {
+                  if (state is PublishSuccess) {
+                    _controllerCenter.play();
+                  }
+                  if (state is PublishFailed) {
+                    customAnimatedSnackbar(
+                        context,
+                        'Failed to publish: ${state.errorMessage}',
+                        Colors.red,
+                        Icons.error);
+                  }
+                },
+              ),
+            ],
+            child: Stack(
+              children: [
+                BlocBuilder<BlogBloc, BlogState>(
+                  builder: (context, blogState) {
+                    return ResponsiveLayout(
+                        mobileWidget: Center(
+                            child: CarouselSlider(
+                          options: CarouselOptions(
+                            height: MediaQuery.of(context).size.height,
+                            initialPage: currentIndex,
+                            enableInfiniteScroll: false,
+                            enlargeCenterPage: true,
+                            viewportFraction: 1.0,
+                            onPageChanged: (index, reason) {
+                              setState(() {
+                                currentIndex = index;
+                              });
+                            },
+                          ),
+                          items: [
+                            _buildLeftPanel(context.isDark),
+                            EditorScreen(
                               uid: widget.uid,
                               title: widget.title,
                               content: widget.content,
                               htmlPreview: widget.content,
-                            )),
-                        Expanded(
-                            flex: 5,
-                            child: _buildPreview(blogState, context.isDark)),
-                      ],
-                    )));
-              },
+                            ),
+                            _buildPreview(blogState, context.isDark)
+                          ].map((widget) {
+                            return Builder(
+                              builder: (BuildContext context) {
+                                return SizedBox(
+                                  width: MediaQuery.of(context).size.width,
+                                  child: widget,
+                                );
+                              },
+                            );
+                          }).toList(),
+                        )),
+                        desktopWidget: Center(
+                            child: Row(
+                          children: [
+                            Expanded(
+                                flex: 2,
+                                child: _buildLeftPanel(context.isDark)),
+                            Expanded(
+                                flex: 5,
+                                child: EditorScreen(
+                                  uid: widget.uid,
+                                  title: widget.title,
+                                  content: widget.content,
+                                  htmlPreview: widget.content,
+                                )),
+                            Expanded(
+                                flex: 5,
+                                child:
+                                    _buildPreview(blogState, context.isDark)),
+                          ],
+                        )));
+                  },
+                ),
+                Align(
+                  alignment: Alignment.center,
+                  child: ConfettiWidget(
+                    emissionFrequency: 0.8,
+                    minimumSize: const Size(4, 4),
+                    maximumSize: const Size(12, 12),
+                    numberOfParticles: 100,
+                    gravity: 0.1,
+                    confettiController: _controllerCenter,
+                    blastDirectionality: BlastDirectionality
+                        .explosive, // don't specify a direction, blast randomly
+                    shouldLoop:
+                        false, // start again as soon as the animation is finished
+                    colors: const [
+                      Colors.green,
+                      Colors.blue,
+                      Colors.pink,
+                      Colors.orange,
+                      Colors.purple
+                    ], // manually specify the colors to be used
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -390,37 +568,6 @@ class _ScreenContentState extends State<ScreenContent> {
     );
   }
 
-  void _animatedAppbar(
-      BuildContext context, String message, Color color, IconData icon) {
-    return AnimatedSnackBar(
-      builder: ((context) {
-        return Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            color: color,
-          ),
-          padding: const EdgeInsets.all(8),
-          height: 50,
-          child: Row(
-            children: [
-              Icon(icon, color: Colors.white),
-              const SizedBox(width: 10),
-              Text(
-                message,
-                style: GoogleFonts.robotoMono(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        );
-      }),
-      desktopSnackBarPosition: DesktopSnackBarPosition.topRight,
-      mobileSnackBarPosition: MobileSnackBarPosition.top,
-    ).show(context);
-  }
-
-  // Widget _buildEditor(context) {
   Widget _buildPreview(state, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -459,6 +606,7 @@ class _ScreenContentState extends State<ScreenContent> {
                             borderRadius: BorderRadius.circular(8),
                             child: Image.network(
                               uri.toString(),
+                              // 'https://images.pexels.com/photos/674010/pexels-photo-674010.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
                               loadingBuilder: (_, child, loadingProgress) {
                                 if (loadingProgress == null) return child;
                                 return const Center(
@@ -612,7 +760,7 @@ class _EditorScreenState extends State<EditorScreen> {
                     },
                     maxLines: null,
                     cursorColor: AppColors.primaryLight,
-                    style: GoogleFonts.robotoMono(
+                    style: GoogleFonts.spaceGrotesk(
                         fontSize: context.isMobile ? 22 : 28,
                         fontWeight: FontWeight.w500),
                     decoration: InputDecoration(

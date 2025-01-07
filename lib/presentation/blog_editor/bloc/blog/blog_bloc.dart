@@ -1,8 +1,8 @@
 import 'package:blog/domain/entities/blog/blog_entity.dart';
 import 'package:blog/domain/services/markdown_service.dart';
 import 'package:blog/domain/usecases/hive/update_usecase.dart';
-import 'package:blog/presentation/home/screens/blog_editor/bloc/blog/blog_event.dart';
-import 'package:blog/presentation/home/screens/blog_editor/bloc/blog/blog_state.dart';
+import 'package:blog/presentation/blog_editor/bloc/blog/blog_event.dart';
+import 'package:blog/presentation/blog_editor/bloc/blog/blog_state.dart';
 import 'package:blog/service_locator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';

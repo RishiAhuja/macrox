@@ -1,6 +1,6 @@
 import 'package:blog/domain/usecases/cloud_storage/upload_image_usecase.dart';
-import 'package:blog/presentation/home/screens/blog_editor/bloc/upload/upload_event.dart';
-import 'package:blog/presentation/home/screens/blog_editor/bloc/upload/upload_state.dart';
+import 'package:blog/presentation/blog_editor/bloc/upload/upload_event.dart';
+import 'package:blog/presentation/blog_editor/bloc/upload/upload_state.dart';
 import 'package:blog/service_locator.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 

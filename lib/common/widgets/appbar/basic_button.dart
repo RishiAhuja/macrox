@@ -12,6 +12,7 @@ class BasicButton extends StatelessWidget {
   final double? width;
   final Widget? customWidget;
   final bool? enableBorder;
+  final double? customFontSize;
   const BasicButton(
       {super.key,
       this.onPressed,
@@ -20,7 +21,8 @@ class BasicButton extends StatelessWidget {
       this.dynamic,
       this.width,
       this.customWidget,
-      this.enableBorder});
+      this.enableBorder,
+      this.customFontSize});
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -52,9 +54,10 @@ class BasicButton extends StatelessWidget {
                       text ?? 'Button',
                       style: GoogleFonts.robotoMono(
                         color: Colors.black,
-                        fontSize: (dynamic ?? false)
-                            ? (context.isMobile ? 18 : 24)
-                            : 18,
+                        fontSize: customFontSize ??
+                            ((dynamic ?? false)
+                                ? (context.isMobile ? 18 : 24)
+                                : 18),
                       ),
                     ))
             : Container(

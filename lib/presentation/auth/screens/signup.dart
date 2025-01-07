@@ -1,5 +1,5 @@
-import 'package:animated_snack_bar/animated_snack_bar.dart';
 import 'package:blog/common/helper/extensions/is_mobile.dart';
+import 'package:blog/common/widgets/animated_popup/animated_popup.dart';
 import 'package:blog/common/widgets/appbar/basic_button.dart';
 import 'package:blog/common/widgets/neomorphic/blurry_container.dart';
 import 'package:blog/core/configs/assets/app_images.dart';
@@ -36,7 +36,7 @@ class _SignUpState extends State<SignUp> {
           context.go('/home', extra: state.userEntity);
         }
         if (state is AuthError) {
-          _animatedAppbar(context, state.errorMessage);
+          failureAnimatedSnackbar(context, state.errorMessage);
         }
       },
       builder: (context, state) {
@@ -256,33 +256,5 @@ class _SignUpState extends State<SignUp> {
                 decoration: TextDecoration.underline)),
       ],
     );
-  }
-
-  void _animatedAppbar(BuildContext context, String errorMessage) {
-    return AnimatedSnackBar(
-      builder: ((context) {
-        return Container(
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: const Color.fromARGB(255, 249, 79, 67)),
-          padding: const EdgeInsets.all(8),
-          height: 50,
-          child: Row(
-            children: [
-              const Icon(Icons.error_outline_sharp, color: Colors.white),
-              const SizedBox(width: 10),
-              Text(
-                errorMessage,
-                style: GoogleFonts.robotoMono(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        );
-      }),
-      desktopSnackBarPosition: DesktopSnackBarPosition.topRight,
-      mobileSnackBarPosition: MobileSnackBarPosition.top,
-    ).show(context);
   }
 }

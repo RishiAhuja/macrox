@@ -1,3 +1,4 @@
+import 'package:blog/common/helper/extensions/is_dark.dart';
 import 'package:blog/common/widgets/appbar/basic_button.dart';
 import 'package:blog/core/configs/theme/app_colors.dart';
 import 'package:blog/presentation/theme_shift/bloc/theme_cubit.dart';
@@ -10,14 +11,20 @@ import 'package:google_fonts/google_fonts.dart';
 class BlogEditorAppbar extends StatelessWidget implements PreferredSizeWidget {
   final bool isMobile;
   final Widget? customActionWidget;
-  final Widget? textRepacement;
-  final VoidCallback onBackButtonPressed;
+  final Widget? draftRepacement;
+  final VoidCallback onPressedPublish;
+  final VoidCallback onPressedDraft;
+  final Widget? publishRepacement;
+  final Widget? mobileDropdown;
   const BlogEditorAppbar({
     required this.isMobile,
     super.key,
     this.customActionWidget,
-    required this.onBackButtonPressed,
-    this.textRepacement,
+    this.draftRepacement,
+    this.publishRepacement,
+    required this.onPressedPublish,
+    required this.onPressedDraft,
+    this.mobileDropdown,
   });
 
   @override
@@ -48,14 +55,28 @@ class BlogEditorAppbar extends StatelessWidget implements PreferredSizeWidget {
               ],
             ),
             actions: [
-              BasicButton(
-                onPressed: onBackButtonPressed,
-                customWidget: textRepacement ??
-                    Text(
-                      'Save Draft',
-                      style: GoogleFonts.robotoMono(
-                          color: Colors.white, fontSize: 18),
+              GestureDetector(
+                onTap: onPressedDraft,
+                child: Container(
+                    alignment: Alignment.center,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      border: Border.all(
+                          width: 1,
+                          color: context.isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight),
+                      borderRadius: BorderRadius.circular(4),
                     ),
+                    child: draftRepacement),
+              ),
+              BasicButton(
+                onPressed: onPressedPublish,
+                customWidget: publishRepacement,
                 dynamic: true,
               ),
               const ThemeButton(),
@@ -76,11 +97,32 @@ class BlogEditorAppbar extends StatelessWidget implements PreferredSizeWidget {
               ],
             ),
             actions: [
-              BasicButton(
-                onPressed: onBackButtonPressed,
-                customWidget: textRepacement,
-                dynamic: true,
+              mobileDropdown ?? const SizedBox(),
+              GestureDetector(
+                onTap: onPressedDraft,
+                child: Container(
+                    alignment: Alignment.center,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      border: Border.all(
+                          width: 1,
+                          color: context.isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: draftRepacement),
               ),
+              // BasicButton(
+              //   onPressed: onPressedPublish,
+              //   customWidget: publishRepacement,
+              //   dynamic: true,
+              // ),
+              const ThemeButton(),
               customActionWidget ?? const SizedBox(),
             ],
           ),

@@ -1,14 +1,15 @@
 import 'package:blog/presentation/auth/screens/signin.dart';
 import 'package:blog/presentation/auth/screens/signup.dart';
 import 'package:blog/presentation/home/screens/home/home.dart';
-import 'package:blog/presentation/home/screens/blog_editor/screen/blog_editor.dart';
+import 'package:blog/presentation/blog_editor/screen/blog_editor.dart';
 import 'package:blog/presentation/landing/landing.dart';
+import 'package:blog/presentation/preview/screen/blog_preview.dart';
 import 'package:blog/presentation/profile/screen/profile_page.dart';
 import 'package:blog/presentation/users/screen/users.dart';
 import 'package:go_router/go_router.dart';
 
 class AppRouterConstants {
-  static const String newblog = '/blog';
+  static const String newblog = '/editor';
   static const String profile = '/profile';
 }
 
@@ -35,6 +36,10 @@ class AppRouter {
     GoRoute(
       path: '/home',
       builder: (context, state) => const Home(),
+    ),
+    GoRoute(
+      path: '/blog/@:username/:uid',
+      builder: (context, state) => const BlogPreview(),
     ),
     GoRoute(
       path: '${AppRouterConstants.profile}/@:username',

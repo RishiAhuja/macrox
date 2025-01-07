@@ -27,9 +27,10 @@ import 'package:blog/domain/usecases/hive/clear_data_usecase.dart';
 import 'package:blog/domain/usecases/hive/get_all_usecase.dart';
 import 'package:blog/domain/usecases/hive/update_usecase.dart';
 import 'package:blog/presentation/auth/bloc/auth_bloc.dart';
-import 'package:blog/presentation/home/screens/blog_editor/bloc/blog/blog_bloc.dart';
-import 'package:blog/presentation/home/screens/blog_editor/bloc/image/image_bloc.dart';
-import 'package:blog/presentation/home/screens/blog_editor/bloc/upload/upload_bloc.dart';
+import 'package:blog/presentation/blog_editor/bloc/blog/blog_bloc.dart';
+import 'package:blog/presentation/blog_editor/bloc/image/image_bloc.dart';
+import 'package:blog/presentation/blog_editor/bloc/publish/publish_bloc.dart';
+import 'package:blog/presentation/blog_editor/bloc/upload/upload_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 
@@ -93,6 +94,7 @@ void getDependencies() {
       ));
   sl.registerFactory(() => ImageBloc(pickImageUseCase: sl()));
   sl.registerFactory(() => UploadBloc());
+  sl.registerFactory(() => PublishBloc());
 
   //usecases
   sl.registerLazySingleton(() => PickImageUsecase());
