@@ -1,5 +1,6 @@
 import 'package:blog/data/models/firestore/follow_model.dart';
 import 'package:blog/data/models/firestore/profile_model.dart';
+import 'package:blog/domain/entities/blog/blog_preview_entity.dart';
 import 'package:blog/domain/entities/profile/profile_entity.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
@@ -7,6 +8,7 @@ import 'package:dartz/dartz.dart';
 abstract class FirestoreService {
   Future<Either<String, ProfileEntity>> getProfileData(
       ProfileModel profileModel);
+  Future<Either<String, BlogPreviewEntity>> getBlogData(String blogUid);
   Future<Either> follow(FollowModel followModel);
 }
 
@@ -108,6 +110,42 @@ class FirestoreServiceImplementation extends FirestoreService {
       return const Right('Followed Successfully');
     } catch (e) {
       return Left('Firestore Error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Either<String, BlogPreviewEntity>> getBlogData(String blogUid) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('Blogs')
+          .doc(blogUid)
+          .get();
+      if (doc.exists) {
+        final user = doc.data() as Map<String, dynamic>;
+        print(doc.data());
+        try {
+          final profileEntity = BlogPreviewEntity(
+              userUid: user['userUid'],
+              blogUid: user['blogUid'],
+              content: user['content'],
+              title: user['title'],
+              authors: user['authors'],
+              authorUid: user['authorUid'],
+              likedBy: (user['likedBy']),
+              likes: user['likes'],
+              status: user['status'],
+              publishedTimestamp: user['publishedTimestamp']);
+          print('blog preview entity created successfully');
+          return Right(profileEntity);
+        } catch (e) {
+          print(e);
+          return Left('failed to create entity, ${e.toString()}');
+        }
+      } else {
+        return const Left('Blog not found');
+      }
+    } catch (e) {
+      return Left('Firestore Error ${e.toString()}');
     }
   }
 }

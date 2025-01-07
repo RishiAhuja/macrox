@@ -27,6 +27,9 @@ class BasicAppBar extends StatelessWidget implements PreferredSizeWidget {
         final currentPath = GoRouterState.of(context).uri.toString();
         return ResponsiveLayout(
           desktopWidget: AppBar(
+            scrolledUnderElevation: 0,
+            shadowColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
             elevation: 0,
             backgroundColor: state == ThemeMode.dark
                 ? AppColors.darkBackground

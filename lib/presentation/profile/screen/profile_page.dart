@@ -22,14 +22,14 @@ import 'package:intl/intl.dart';
 class ProfilePage extends StatelessWidget {
   final String userUid;
   final String username;
-  final String name;
-  final String email;
+  final String? name;
+  final String? email;
   const ProfilePage(
       {super.key,
       required this.userUid,
       required this.username,
-      required this.name,
-      required this.email});
+      this.name,
+      this.email});
 
   @override
   Widget build(BuildContext context) {
@@ -54,14 +54,14 @@ class ProfilePage extends StatelessWidget {
 class ProfilePageContent extends StatefulWidget {
   final String userUid;
   final String username;
-  final String name;
-  final String email;
+  final String? name;
+  final String? email;
   const ProfilePageContent(
       {super.key,
       required this.userUid,
       required this.username,
-      required this.name,
-      required this.email});
+      this.name,
+      this.email});
 
   @override
   State<ProfilePageContent> createState() => _ProfilePageContentState();

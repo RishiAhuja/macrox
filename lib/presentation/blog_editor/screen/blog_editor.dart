@@ -32,6 +32,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class BlogEditor extends StatelessWidget {
   final String uid;
@@ -618,6 +619,15 @@ class _ScreenContentState extends State<ScreenContent> {
                           ),
                         ),
                       );
+                    },
+                    onTapLink: (text, href, title) async {
+                      if (href != null) {
+                        final uri = Uri.parse(href);
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri,
+                              mode: LaunchMode.externalApplication);
+                        }
+                      }
                     },
                     styleSheet: MarkdownStyleSheet(
                       p: GoogleFonts.robotoMono(),
