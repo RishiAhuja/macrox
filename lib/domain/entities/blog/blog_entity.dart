@@ -6,14 +6,15 @@ class BlogEntity {
   final String content;
   final String htmlPreview;
   final String title;
+  final bool published;
 
-  BlogEntity({
-    required this.uid,
-    required this.content,
-    required this.htmlPreview,
-    this.title = '',
-    required this.userUid,
-  });
+  BlogEntity(
+      {required this.uid,
+      required this.content,
+      required this.htmlPreview,
+      this.title = '',
+      required this.userUid,
+      required this.published});
 
   factory BlogEntity.fromJson(Map<String, dynamic> json) {
     return BlogEntity(
@@ -22,6 +23,7 @@ class BlogEntity {
       content: json['content']?.toString() ?? '',
       htmlPreview: json['htmlPreview']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
+      published: json['published'] as bool? ?? false,
     );
   }
 
@@ -32,6 +34,7 @@ class BlogEntity {
       'title': title,
       'uid': uid,
       'userUid': userUid,
+      'published': published,
     };
   }
 }
@@ -44,6 +47,7 @@ extension BlogEntityX on BlogEntity {
       htmlPreview: htmlPreview,
       uid: uid,
       userUid: userUid,
+      published: published,
     );
   }
 }

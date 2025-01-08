@@ -12,10 +12,12 @@ class SaveDraft extends BlogEvent {
   final String title;
   final String htmlPreview;
   final String userUid;
+  final bool published;
   SaveDraft(
       {required this.uid,
       required this.content,
       required this.title,
       required this.htmlPreview,
-      required this.userUid});
+      required this.userUid,
+      required this.published});
 }

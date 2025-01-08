@@ -53,13 +53,15 @@ Widget appBarInfoPopup(
           ),
         ),
         PopupMenuItem<String>(
-          onTap: () =>
-              context.go('${AppRouterConstants.profile}/@$username', extra: {
-            'email': email,
-            'name': name,
-            'userUid': id,
-            'username': username,
-          }),
+          onTap: () => context.go(
+            '${AppRouterConstants.profile}/@$username',
+            //   extra: {
+            // 'email': email,
+            // 'name': name,
+            // 'userUid': id,
+            // 'username': username,
+            // }
+          ),
           enabled: true,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8),

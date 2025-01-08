@@ -7,7 +7,7 @@ sealed class AuthState {
       case 'AuthInitial':
         return AuthInitial();
       case 'AuthLoading':
-        return AuthLoading();
+        return AuthInitial(); // If restarts at AuthLoading, should not show AuthLoading after restart.
       case 'AuthError':
         return AuthError(errorMessage: map['errorMessage']);
       case 'AuthSuccess':

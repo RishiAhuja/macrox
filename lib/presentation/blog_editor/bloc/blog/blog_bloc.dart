@@ -35,7 +35,8 @@ class BlogBloc extends HydratedBloc<BlogEvent, BlogState> {
             uid: event.uid,
             content: event.content,
             htmlPreview: event.htmlPreview,
-            title: event.title));
+            title: event.title,
+            published: event.published));
     print("saved draft");
     await FirebaseFirestore.instance
         .collection('Users')

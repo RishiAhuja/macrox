@@ -1,3 +1,5 @@
+// import 'dart:io'; Not available in web
+
 import 'package:blog/data/models/auth/create_user_request.dart';
 import 'package:blog/data/models/auth/login_user_request.dart';
 import 'package:blog/data/models/auth/no_params.dart';
@@ -7,6 +9,7 @@ import 'package:blog/domain/usecases/auth/signup_usecase.dart';
 import 'package:blog/domain/usecases/hive/clear_data_usecase.dart';
 import 'package:blog/presentation/auth/bloc/auth_event.dart';
 import 'package:blog/presentation/auth/bloc/auth_state.dart';
+// import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:hive/hive.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 
@@ -62,6 +65,12 @@ class AuthBloc extends HydratedBloc<AuthEvent, AuthState> {
   Future<void> _onSignInRequested(
       SignInRequested event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
+    // final connectivityResult = await Connectivity().checkConnectivity();
+    // if ([ConnectivityResult.none].contains(connectivityResult)) {
+    //   emit(AuthError(errorMessage: 'No internet connection'));
+    //   return;
+    // }
+
     await _logoutUseCase(params: NoParams());
     final loginUserRequest =
         LoginUserRequest(email: event.email, password: event.password);

@@ -114,7 +114,8 @@ class _BlogPreviewContentState extends State<BlogPreviewContent> {
                       child: MouseRegion(
                         cursor: SystemMouseCursors.click,
                         child: Text('@${state.blogEntity.authors[0]}',
-                            style: GoogleFonts.robotoMono(fontSize: 20)),
+                            style: GoogleFonts.robotoMono(
+                                fontSize: context.isMobile ? 10 : 20)),
                       ),
                     ),
                     const Padding(
@@ -124,7 +125,8 @@ class _BlogPreviewContentState extends State<BlogPreviewContent> {
                     Text(
                         DateFormat.yMMMMd().format(
                             (state.blogEntity.publishedTimestamp).toDate()),
-                        style: GoogleFonts.robotoMono(fontSize: 20)),
+                        style: GoogleFonts.robotoMono(
+                            fontSize: context.isMobile ? 10 : 20)),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 10.0),
                       child: Text(' · '),
@@ -133,7 +135,8 @@ class _BlogPreviewContentState extends State<BlogPreviewContent> {
                     const SizedBox(width: 8),
                     Text(
                         '${calculateReadTime(state.blogEntity.content)} min read',
-                        style: GoogleFonts.robotoMono(fontSize: 20)),
+                        style: GoogleFonts.robotoMono(
+                            fontSize: context.isMobile ? 10 : 20)),
                   ],
                 ),
                 const SizedBox(height: 20),

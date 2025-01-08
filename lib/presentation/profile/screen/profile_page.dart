@@ -1,12 +1,17 @@
 import 'package:blog/common/helper/extensions/get_initials.dart';
 import 'package:blog/common/helper/extensions/is_dark.dart';
 import 'package:blog/common/helper/extensions/is_mobile.dart';
+import 'package:blog/common/router/app_router.dart';
 import 'package:blog/common/widgets/appbar/appbar.dart';
 import 'package:blog/common/widgets/appbar/basic_button.dart';
 import 'package:blog/core/configs/theme/app_colors.dart';
+import 'package:blog/domain/entities/profile/blogs_entity.dart';
 import 'package:blog/presentation/auth/bloc/auth_bloc.dart';
 import 'package:blog/presentation/auth/bloc/auth_state.dart';
 import 'package:blog/presentation/profile/bloc/follow_bloc/follow_bloc.dart';
+import 'package:blog/presentation/profile/bloc/load_blogs_bloc/load_blogs_bloc.dart';
+import 'package:blog/presentation/profile/bloc/load_blogs_bloc/load_blogs_event.dart';
+import 'package:blog/presentation/profile/bloc/load_blogs_bloc/load_blogs_state.dart';
 import 'package:blog/presentation/profile/bloc/profile_data_bloc/profile_bloc.dart';
 import 'package:blog/presentation/profile/bloc/profile_data_bloc/profile_event.dart';
 import 'package:blog/presentation/profile/bloc/profile_data_bloc/profile_state.dart';
@@ -15,53 +20,59 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_advanced_avatar/flutter_advanced_avatar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
 import 'package:intl/intl.dart';
 
 class ProfilePage extends StatelessWidget {
-  final String userUid;
-  final String username;
-  final String? name;
-  final String? email;
-  const ProfilePage(
-      {super.key,
-      required this.userUid,
-      required this.username,
-      this.name,
-      this.email});
+  // final String userUid;
+  // final String username;
+  // final String? name;
+  // final String? email;
+  const ProfilePage({
+    super.key,
+    // required this.userUid,
+    // required this.username,
+    // this.name,
+    // this.email
+  });
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider.value(
-          value: context.read<AuthBloc>(),
-        ),
-        BlocProvider(
-          create: (context) => ProfileBloc()..add(LoadUserData(userUid)),
-        ),
-        BlocProvider(
-          create: (context) => FollowBloc(),
-        ),
-      ],
-      child: ProfilePageContent(
-          userUid: userUid, username: username, name: name, email: email),
-    );
+    final String? username =
+        GoRouterState.of(context).pathParameters['username'];
+    if (username != null) {
+      return MultiBlocProvider(
+        providers: [
+          BlocProvider.value(
+            value: context.read<AuthBloc>(),
+          ),
+          BlocProvider(
+              create: (context) => ProfileBloc()
+                ..add(LoadUserData(username: username.toLowerCase()))),
+          BlocProvider(
+            create: (context) => FollowBloc(),
+          ),
+          BlocProvider(
+            create: (context) => LoadBlogsBloc()
+              ..add(LoadUserBlogs(username: username.toLowerCase())),
+          ),
+        ],
+        child: ProfilePageContent(username: username.toLowerCase()),
+      );
+    } else {
+      return Center(
+          child: Text(
+              'User not found! Trying changing the username in the URL!',
+              style: GoogleFonts.robotoMono(fontSize: 20)));
+    }
   }
 }
 
 class ProfilePageContent extends StatefulWidget {
-  final String userUid;
   final String username;
-  final String? name;
-  final String? email;
-  const ProfilePageContent(
-      {super.key,
-      required this.userUid,
-      required this.username,
-      this.name,
-      this.email});
+  const ProfilePageContent({super.key, required this.username});
 
   @override
   State<ProfilePageContent> createState() => _ProfilePageContentState();
@@ -74,9 +85,10 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
   void initState() {
     super.initState();
     (context.read<AuthBloc>().state is AuthSuccess)
-        ? isLocal =
-            (context.read<AuthBloc>().state as AuthSuccess).userEntity.id ==
-                (widget.userUid)
+        ? isLocal = (context.read<AuthBloc>().state as AuthSuccess)
+                .userEntity
+                .username ==
+            (widget.username)
         : isLocal = false;
     print("isLocal: $isLocal");
   }
@@ -87,96 +99,166 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
       appBar: const BasicAppBar(
         isLanding: false,
       ),
-      body: BlocBuilder<ProfileBloc, ProfileState>(
-        builder: (context, state) {
-          if (state is UserLoading) {
-            return Center(
-                child: Column(
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(height: 20),
-                Text(
-                  'Loading user data',
-                  style: GoogleFonts.robotoMono(),
-                )
-              ],
-            ));
-          }
-          if (state is UserError) {
-            return Center(
-              child: Text("Error: //${state.message}",
-                  style: GoogleFonts.robotoMono()),
-            );
-          }
-          if (state is UserLoaded) {
-            return Center(
-              child: Column(
-                children: [
-                  Container(
-                      width: MediaQuery.of(context).size.width *
-                          (context.isMobile ? 1 : 0.8),
-                      padding: EdgeInsets.all(context.isMobile ? 20 : 40),
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                              width: .4,
-                              color: (context.isMobile)
-                                  ? Colors.transparent
-                                  : Colors.grey[500] ?? Colors.grey)),
-                      child: SingleChildScrollView(
-                        child: Column(
-                          children: [
-                            ResponsiveLayout(
-                                mobileWidget: Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16),
-                                  child: Column(
-                                    children: [
-                                      _infoPlatformLeft(
-                                          name: state.userData.name,
-                                          bio: state.userData.bio ?? "",
-                                          username: state.userData.username,
-                                          followerCount:
-                                              state.userData.followerCount,
-                                          followingCount:
-                                              state.userData.followingCount),
-                                      _infoPlaformRight(),
-                                      const SizedBox(height: 18),
-                                      _joiningDate(state.userData.createdAt),
-                                    ],
-                                  ),
-                                ),
-                                desktopWidget: Column(
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        _infoPlatformLeft(
-                                            name: state.userData.name,
-                                            bio: state.userData.bio ?? "",
-                                            username: state.userData.username,
-                                            followerCount:
-                                                state.userData.followerCount,
-                                            followingCount:
-                                                state.userData.followingCount),
-                                        _infoPlaformRight(),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 18),
-                                    _joiningDate(state.userData.createdAt),
-                                  ],
-                                )),
-                          ],
+      body: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            BlocBuilder<ProfileBloc, ProfileState>(
+              builder: (context, state) {
+                if (state is UserLoading) {
+                  return Center(
+                      child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Loading user data',
+                        style: GoogleFonts.robotoMono(),
+                      )
+                    ],
+                  ));
+                }
+                if (state is UserError) {
+                  return Center(
+                    child: Text("Error: //${state.message}",
+                        style: GoogleFonts.robotoMono()),
+                  );
+                }
+                if (state is UserLoaded) {
+                  return Center(
+                    child: Column(
+                      children: [
+                        Container(
+                            width: MediaQuery.of(context).size.width *
+                                (context.isMobile ? 1 : 0.8),
+                            padding: EdgeInsets.all(context.isMobile ? 20 : 40),
+                            decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                    width: .4,
+                                    color: (context.isMobile)
+                                        ? Colors.transparent
+                                        : Colors.grey[500] ?? Colors.grey)),
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  ResponsiveLayout(
+                                      mobileWidget: Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 16),
+                                        child: Column(
+                                          children: [
+                                            _infoPlatformLeft(
+                                                name: (state).userData.name,
+                                                bio: state.userData.bio ?? "",
+                                                username:
+                                                    state.userData.username,
+                                                followerCount: state
+                                                    .userData.followerCount,
+                                                followingCount: state
+                                                    .userData.followingCount),
+                                            _infoPlaformRight(),
+                                            const SizedBox(height: 18),
+                                            _joiningDate(
+                                                state.userData.createdAt),
+                                          ],
+                                        ),
+                                      ),
+                                      desktopWidget: Column(
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              _infoPlatformLeft(
+                                                  name: state.userData.name,
+                                                  bio: state.userData.bio ?? "",
+                                                  username:
+                                                      state.userData.username,
+                                                  followerCount: state
+                                                      .userData.followerCount,
+                                                  followingCount: state
+                                                      .userData.followingCount,
+                                                  followers:
+                                                      state.userData.followers,
+                                                  following:
+                                                      state.userData.following),
+                                              _infoPlaformRight(),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 18),
+                                          _joiningDate(
+                                              state.userData.createdAt),
+                                        ],
+                                      )),
+                                ],
+                              ),
+                            ))
+                      ],
+                    ),
+                  );
+                }
+                return const SizedBox();
+              },
+            ),
+            BlocBuilder<LoadBlogsBloc, LoadBlogsState>(
+                builder: (context, state) {
+              if (state is BlogsLoading) {
+                return Center(
+                    child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Loading blogs data',
+                      style: GoogleFonts.robotoMono(),
+                    )
+                  ],
+                ));
+              }
+              if (state is BlogsError) {
+                return Center(
+                  child: Text("Error: //${state.message}",
+                      style: GoogleFonts.robotoMono()),
+                );
+              }
+              if (state is BlogsLoaded) {
+                return Container(
+                  width: MediaQuery.of(context).size.width *
+                      (context.isMobile ? 1 : 0.8),
+                  padding: const EdgeInsets.only(top: 20),
+                  child: SingleChildScrollView(
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.5,
+                      child: GridView.builder(
+                        // physics: const NeverScrollableScrollPhysics(),
+                        key: const PageStorageKey('blog_grid'),
+                        shrinkWrap: true,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: context.isMobile ? 1 : 3,
+                          childAspectRatio: 2.2,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
                         ),
-                      ))
-                ],
-              ),
-            );
-          }
-          return const SizedBox();
-        },
+                        itemCount: state.blogs.length,
+                        itemBuilder: (context, index) {
+                          final blog = state.blogs[index];
+                          return BlogCard(
+                            blog: blog,
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                );
+              }
+              return const SizedBox();
+            })
+          ],
+        ),
       ),
     );
   }
@@ -212,7 +294,9 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
       required String username,
       required String bio,
       int? followingCount,
-      int? followerCount}) {
+      int? followerCount,
+      List? followers,
+      List? following}) {
     return Row(
       children: [
         AdvancedAvatar(
@@ -224,65 +308,159 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
           ),
         ),
         const SizedBox(width: 30),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              name,
-              style: GoogleFonts.spaceGrotesk(
-                  fontSize: context.isMobile ? 24 : 18.sp),
-            ),
-            Text(
-              '@$username',
-              style: GoogleFonts.robotoMono(
-                  fontSize: context.isMobile ? 18 : 12.sp,
-                  color: context.isDark ? Colors.grey[300] : Colors.grey[700]),
-            ),
-            Text(
-              bio,
-              style: GoogleFonts.robotoMono(
-                  fontSize: 12.sp,
-                  color: context.isDark ? Colors.grey[300] : Colors.grey[700]),
-            ),
-            _followStats(followingCount, followerCount),
-          ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name,
+                style: GoogleFonts.spaceGrotesk(
+                    fontSize: context.isMobile ? 24 : 18.sp),
+              ),
+              Text(
+                '@$username',
+                style: GoogleFonts.robotoMono(
+                    fontSize: context.isMobile ? 18 : 12.sp,
+                    color:
+                        context.isDark ? Colors.grey[300] : Colors.grey[700]),
+              ),
+              Text(
+                bio,
+                softWrap: true,
+                overflow: TextOverflow.visible,
+                style: GoogleFonts.spaceGrotesk(
+                    fontSize: 13.sp,
+                    color:
+                        context.isDark ? Colors.grey[300] : Colors.grey[700]),
+              ),
+              const SizedBox(
+                height: 10,
+              ),
+              _followStats(followingCount, followerCount, following, followers),
+              const SizedBox(
+                height: 10,
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _followStats(int? followingCount, int? followerCount) {
+  void _showFollowersFollowing(
+      BuildContext context, List list, bool isFollowers) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor:
+            context.isDark ? AppColors.darkBackground : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: context.isDark ? Colors.grey[800]! : Colors.grey[300]!,
+          ),
+        ),
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.3,
+          height: MediaQuery.of(context).size.height * 0.6,
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    isFollowers ? 'Followers' : 'Following',
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const Divider(),
+              Expanded(
+                child: list.isEmpty
+                    ? Center(
+                        child: Text(
+                          isFollowers ? 'No followers yet' : 'No following yet',
+                          style: GoogleFonts.robotoMono(),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: list.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(
+                            title: Text(
+                              '@${list[index]}',
+                              style: GoogleFonts.robotoMono(),
+                            ),
+                            onTap: () {
+                              Navigator.pop(context);
+                              context.push('/profile/@${list[index]}');
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _followStats(int? followingCount, int? followerCount, List? following,
+      List? followers) {
     return Row(
       children: [
-        Text(
-          followerCount.toString(),
-          style: GoogleFonts.spaceGrotesk(
-              fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(
-          width: 6,
-        ),
-        Text(
-          'Followers',
-          style: GoogleFonts.spaceGrotesk(
-              fontSize: 16, fontWeight: FontWeight.w400),
+        GestureDetector(
+          onTap: () => _showFollowersFollowing(context, followers ?? [], true),
+          child: Row(
+            children: [
+              Text(
+                followerCount.toString(),
+                style: GoogleFonts.spaceGrotesk(
+                    fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(
+                width: 6,
+              ),
+              Text(
+                'Followers',
+                style: GoogleFonts.spaceGrotesk(
+                    fontSize: 16, fontWeight: FontWeight.w400),
+              ),
+            ],
+          ),
         ),
         const SizedBox(
           width: 15,
         ),
-        Text(
-          followingCount.toString(),
-          style: GoogleFonts.spaceGrotesk(
-              fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(
-          width: 6,
-        ),
-        Text(
-          "Following",
-          style: GoogleFonts.spaceGrotesk(
-              fontSize: 16, fontWeight: FontWeight.w400),
-        ),
+        GestureDetector(
+          onTap: () => _showFollowersFollowing(context, following ?? [], false),
+          child: Row(
+            children: [
+              Text(
+                followingCount.toString(),
+                style: GoogleFonts.spaceGrotesk(
+                    fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(
+                width: 6,
+              ),
+              Text(
+                "Following",
+                style: GoogleFonts.spaceGrotesk(
+                    fontSize: 16, fontWeight: FontWeight.w400),
+              ),
+            ],
+          ),
+        )
       ],
     );
   }
@@ -329,11 +507,27 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
                           .userEntity;
                   context.read<FollowBloc>().add(FollowUser(
                       followerUid: localUser.id,
-                      followingUid: widget.userUid,
+                      followingUid:
+                          (context.read<ProfileBloc>().state as UserLoaded)
+                              .userData
+                              .uid,
                       followerUsername: localUser.username,
                       followingUsername: widget.username));
                 } else {
-                  // Redirect to Edit profile
+                  final userData =
+                      (context.read<ProfileBloc>().state as UserLoaded)
+                          .userData;
+                  context.go(AppRouterConstants.profileEdit, extra: {
+                    'username': widget.username,
+                    'name': userData.name,
+                    'bio': userData.bio,
+                    'socials': {
+                      'instagram': userData.socials?['instagram'],
+                      'twitter': userData.socials?['twitter'],
+                      'github': userData.socials?['github'],
+                      'linkedin': userData.socials?['linkedin'],
+                    }
+                  });
                 }
               },
               width: isLocal
@@ -383,8 +577,10 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
       );
     } else {
       if (state is FollowLoading) {
-        return const CircularProgressIndicator(
-          color: Colors.white,
+        return const Center(
+          child: CircularProgressIndicator(
+            color: Colors.white,
+          ),
         );
       }
       if (state is FollowSuccess ||
@@ -399,5 +595,81 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
         size: 20,
       );
     }
+  }
+}
+
+class BlogCard extends StatefulWidget {
+  final ProfileBlogEntity blog;
+  const BlogCard({super.key, required this.blog});
+
+  @override
+  State<BlogCard> createState() => _BlogCardState();
+}
+
+class _BlogCardState extends State<BlogCard> {
+  bool isHovered = false;
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => isHovered = true),
+      onExit: (_) => setState(() => isHovered = false),
+      child: AnimatedContainer(
+        margin: EdgeInsets.symmetric(horizontal: context.isMobile ? 10 : 1),
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: isHovered
+              ? AppColors.primaryLight.withOpacity(0.4)
+              : (context.isDark ? AppColors.darkBackground : Colors.white),
+          border: Border.all(
+            color: isHovered
+                ? AppColors.primaryLight
+                : (context.isDark ? Colors.grey[800]! : Colors.grey[300]!),
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: GestureDetector(
+          onTap: () => context
+              .go('/blog/@${widget.blog.authors[0]}/${widget.blog.blogUid}'),
+          child: Card(
+            key: ValueKey(widget.blog.blogUid),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            color: context.isDark ? AppColors.darkBackground : Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.blog.title,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: Text(
+                          widget.blog.content,
+                          style: GoogleFonts.robotoMono(fontSize: 14),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

@@ -21,6 +21,7 @@ import 'package:blog/domain/usecases/auth/signin_usecase.dart';
 import 'package:blog/domain/usecases/auth/signup_usecase.dart';
 import 'package:blog/domain/usecases/cloud_storage/upload_image_usecase.dart';
 import 'package:blog/domain/usecases/firestore/follow_usecase.dart';
+import 'package:blog/domain/usecases/firestore/get_profile_blogs_usecase.dart';
 import 'package:blog/domain/usecases/firestore/get_profile_usecase.dart';
 import 'package:blog/domain/usecases/hive/add_usecase.dart';
 import 'package:blog/domain/usecases/hive/clear_data_usecase.dart';
@@ -33,7 +34,6 @@ import 'package:blog/presentation/blog_editor/bloc/publish/publish_bloc.dart';
 import 'package:blog/presentation/blog_editor/bloc/upload/upload_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
-
 import 'domain/usecases/cloud_storage/pick_image_usecase.dart';
 
 final GetIt sl = GetIt.instance;
@@ -106,6 +106,7 @@ void getDependencies() {
   );
 
   sl.registerLazySingleton(() => UploadImageUsecase());
+  sl.registerLazySingleton(() => GetProfileBlogsUsecase());
 
   /*
   Singletons - 

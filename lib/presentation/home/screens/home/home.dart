@@ -131,7 +131,8 @@ class _HomeState extends State<Home> {
                         content: '',
                         htmlPreview: '',
                         title: '',
-                        userUid: userUid));
+                        userUid: userUid,
+                        published: false));
                 context.go(
                   '${AppRouterConstants.newblog}/$blogUid',
                   extra: {
@@ -139,6 +140,7 @@ class _HomeState extends State<Home> {
                     'title': '',
                     'content': '',
                     'htmlPreview': '',
+                    'published': false
                   },
                 );
               },
@@ -173,17 +175,17 @@ class _HomeState extends State<Home> {
                 shrinkWrap: true,
                 itemCount: localBlogs.length,
                 itemBuilder: (context, index) {
-                  print(localBlogs.length);
                   final blog = localBlogs.values.elementAt(index);
                   return ListTile(
                     title: Text(blog.uid),
-                    subtitle: Text(blog.title),
+                    subtitle: Text('${blog.title} : ${blog.published}'),
                     onTap: () {
                       final extraData = {
                         'title': blog.title,
                         'content': blog.content,
                         'htmlPreview': blog.htmlPreview,
-                        'userUid': blog.userUid
+                        'userUid': blog.userUid,
+                        'published': blog.published
                       };
                       // print('Sending data: $extraData'); // Debug print
                       context.go(
@@ -227,13 +229,15 @@ class _HomeState extends State<Home> {
                       }
                       return ListTile(
                         title: Text(blog['uid']),
-                        subtitle: Text(blog['title']),
+                        subtitle: Text(
+                            '${blog['title'] ?? ""} : ${blog['published'] ?? false}'),
                         onTap: () {
                           final extraData = {
                             'title': blog['title'],
                             'content': blog['content'],
-                            'htmlPreview': blog['htmlPreview'],
-                            'userUid': userUid
+                            'htmlPreview': blog['htmlPreview'] ?? "",
+                            'userUid': userUid,
+                            'published': blog['published'] ?? false
                           };
                           // print('Sending data: $extraData'); // Debug print
                           context.go(

@@ -13,7 +13,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       LoadUserData event, Emitter<ProfileState> emit) async {
     emit(UserLoading());
     final result = await GetProfileUsecase()
-        .call(params: ProfileModel(uid: event.userUid));
+        .call(params: ProfileModel(username: event.username));
 
     result.fold((l) {
       emit(UserError(l));

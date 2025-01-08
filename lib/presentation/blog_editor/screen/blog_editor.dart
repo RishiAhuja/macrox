@@ -40,13 +40,15 @@ class BlogEditor extends StatelessWidget {
   final String? content;
   final String? htmlPreview;
   final String userUid;
+  final bool published;
   const BlogEditor(
       {super.key,
       required this.uid,
       this.title,
       this.content,
       this.htmlPreview,
-      required this.userUid});
+      required this.userUid,
+      required this.published});
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +68,7 @@ class BlogEditor extends StatelessWidget {
         content: content,
         htmlPreview: htmlPreview,
         userUid: userUid,
+        published: published,
       ),
     );
   }
@@ -77,13 +80,15 @@ class ScreenContent extends StatefulWidget {
   final String? content;
   final String? htmlPreview;
   final String userUid;
+  final bool published;
   const ScreenContent(
       {super.key,
       required this.uid,
       this.title,
       this.content,
       this.htmlPreview,
-      required this.userUid});
+      required this.userUid,
+      required this.published});
 
   @override
   State<ScreenContent> createState() => _ScreenContentState();
@@ -229,7 +234,8 @@ class _ScreenContentState extends State<ScreenContent> {
                     title: blogState.title,
                     content: blogState.content,
                     htmlPreview: blogState.htmlPreview,
-                    userUid: authState.userEntity.id));
+                    userUid: authState.userEntity.id,
+                    published: false));
               }
             },
             isMobile: context.isMobile,
@@ -281,7 +287,7 @@ class _ScreenContentState extends State<ScreenContent> {
                         ),
                       )
                     : Text(
-                        'Publish',
+                        widget.published ? 'Update' : 'Publish',
                         style: GoogleFonts.robotoMono(
                           color: Colors.white,
                           fontSize: 18,
@@ -330,6 +336,8 @@ class _ScreenContentState extends State<ScreenContent> {
                 listener: (context, state) {
                   if (state is PublishSuccess) {
                     _controllerCenter.play();
+                    context.go(
+                        '/blog/@${authState.userEntity.username}/${widget.uid}');
                   }
                   if (state is PublishFailed) {
                     customAnimatedSnackbar(

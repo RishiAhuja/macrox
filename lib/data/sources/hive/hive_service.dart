@@ -19,12 +19,12 @@ class HiveServiceImpl extends HiveService {
     print("added to hive");
 
     final blogModel = BlogModel(
-      uid: entity.uid,
-      title: entity.title,
-      content: entity.content,
-      htmlPreview: entity.htmlPreview,
-      userUid: entity.userUid,
-    );
+        uid: entity.uid,
+        title: entity.title,
+        content: entity.content,
+        htmlPreview: entity.htmlPreview,
+        userUid: entity.userUid,
+        published: entity.published);
     await blogBox.put(blogModel.uid, blogModel);
   }
 
@@ -34,12 +34,12 @@ class HiveServiceImpl extends HiveService {
     final Map<String, BlogEntity> blogMap = {};
     blogBox.values.forEach((model) {
       blogMap[model.uid] = BlogEntity(
-        uid: model.uid,
-        title: model.title,
-        content: model.content,
-        htmlPreview: model.htmlPreview,
-        userUid: model.userUid,
-      );
+          uid: model.uid,
+          title: model.title,
+          content: model.content,
+          htmlPreview: model.htmlPreview,
+          userUid: model.userUid,
+          published: model.published);
     });
 
     return blogMap;
@@ -49,12 +49,12 @@ class HiveServiceImpl extends HiveService {
   Future<void> updateBlog(BlogEntity entity) async {
     print("updated data to hive");
     final blogModel = BlogModel(
-      uid: entity.uid,
-      title: entity.title,
-      content: entity.content,
-      htmlPreview: entity.htmlPreview,
-      userUid: entity.userUid,
-    );
+        uid: entity.uid,
+        title: entity.title,
+        content: entity.content,
+        htmlPreview: entity.htmlPreview,
+        userUid: entity.userUid,
+        published: entity.published);
     await blogBox.put(entity.uid, blogModel);
   }
 
