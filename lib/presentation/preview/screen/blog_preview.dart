@@ -4,6 +4,7 @@ import 'package:blog/common/widgets/appbar/appbar.dart';
 import 'package:blog/presentation/preview/bloc/preview_bloc.dart';
 import 'package:blog/presentation/preview/bloc/preview_event.dart';
 import 'package:blog/presentation/preview/bloc/preview_state.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -17,10 +18,7 @@ class BlogPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // final String? username =
-    //     GoRouterState.of(context).pathParameters['username'];
     final String? uid = GoRouterState.of(context).pathParameters['uid'];
-
     return uid != null
         ? BlocProvider(
             create: (context) => PreviewBloc()..add(LoadBlogPreview(uid)),
@@ -52,6 +50,7 @@ int calculateReadTime(String content) {
 }
 
 class _BlogPreviewContentState extends State<BlogPreviewContent> {
+  bool isLiked = false;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -137,6 +136,38 @@ class _BlogPreviewContentState extends State<BlogPreviewContent> {
                         '${calculateReadTime(state.blogEntity.content)} min read',
                         style: GoogleFonts.robotoMono(
                             fontSize: context.isMobile ? 10 : 20)),
+                    const SizedBox(width: 8),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10.0),
+                      child: Text(' · '),
+                    ),
+                    GestureDetector(
+                        onTap: () {
+                          if (!isLiked) {
+                            FirebaseFirestore.instance
+                                .collection('Blogs')
+                                .doc(state.blogEntity.blogUid)
+                                .update({'likes': FieldValue.increment(1)});
+
+                            setState(() {
+                              isLiked = true;
+                            });
+                          }
+                        },
+                        child: Row(
+                          children: [
+                            Icon(
+                                isLiked
+                                    ? Icons.thumb_up
+                                    : Icons.thumb_up_alt_outlined,
+                                size: 20),
+                            const SizedBox(width: 5),
+                            Text(
+                                '${isLiked ? state.blogEntity.likes : (state.blogEntity.likes + 1)}',
+                                style: GoogleFonts.robotoMono(
+                                    fontSize: context.isMobile ? 10 : 20)),
+                          ],
+                        ))
                   ],
                 ),
                 const SizedBox(height: 20),

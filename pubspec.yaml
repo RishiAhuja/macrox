@@ -64,6 +64,8 @@ dependencies:
   flutter_html: ^3.0.0-beta.2
   confetti: ^0.8.0
   url_launcher: ^6.2.5
+  connectivity_plus: ^6.1.1
+  share_plus: ^10.0.0
   
 dev_dependencies:
   flutter_test:
@@ -90,9 +92,56 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  assets:
-    - assets/image/mesh/
-    - assets/image/mesh/mesh.png
+  # assets:
+  #   - assets/image/mesh/
+  #   - assets/image/mesh/mesh.png
+  # fonts:
+  #   - family: GeistSans
+  #     fonts:
+  #       - asset: packages/shadcn_flutter/fonts/Geist-Black.otf
+  #         weight: 800
+  #       - asset: packages/shadcn_flutter/fonts/Geist-Bold.otf
+  #         weight: 700
+  #       - asset: packages/shadcn_flutter/fonts/Geist-Light.otf
+  #         weight: 300
+  #       - asset: packages/shadcn_flutter/fonts/Geist-Medium.otf
+  #         weight: 500
+  #       - asset: packages/shadcn_flutter/fonts/Geist-SemiBold.otf
+  #         weight: 600
+  #       - asset: packages/shadcn_flutter/fonts/Geist-Thin.otf
+  #         weight: 100
+  #       - asset: packages/shadcn_flutter/fonts/Geist-UltraBlack.otf
+  #         weight: 900
+  #       - asset: packages/shadcn_flutter/fonts/Geist-UltraLight.otf
+  #         weight: 200
+  #       - asset: packages/shadcn_flutter/fonts/Geist-Regular.otf
+  #         weight: 400
+  #   - family: GeistMono
+  #     fonts:
+  #       - asset: packages/shadcn_flutter/fonts/GeistMono-Black.otf
+  #         weight: 800
+  #       - asset: packages/shadcn_flutter/fonts/GeistMono-Bold.otf
+  #         weight: 700
+  #       - asset: packages/shadcn_flutter/fonts/GeistMono-Light.otf
+  #         weight: 300
+  #       - asset: packages/shadcn_flutter/fonts/GeistMono-Medium.otf
+  #         weight: 500
+  #       - asset: packages/shadcn_flutter/fonts/GeistMono-Regular.otf
+  #         weight: 400
+  #       - asset: packages/shadcn_flutter/fonts/GeistMono-SemiBold.otf
+  #         weight: 600
+  #       - asset: packages/shadcn_flutter/fonts/GeistMono-Thin.otf
+  #         weight: 100
+  #       - asset: packages/shadcn_flutter/fonts/GeistMono-UltraBlack.otf
+  #         weight: 900
+  #       - asset: packages/shadcn_flutter/fonts/GeistMono-UltraLight.otf
+  #         weight: 200
+  #   - family: RadixIcons
+  #     fonts:
+  #       - asset: packages/shadcn_flutter/icons/RadixIcons.otf
+  #   - family: BootstrapIcons
+  #     fonts:
+  #       - asset: packages/shadcn_flutter/icons/BootstrapIcons.otf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

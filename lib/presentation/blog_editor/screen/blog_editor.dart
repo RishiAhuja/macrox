@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:blog/common/helper/extensions/is_dark.dart';
 import 'package:blog/common/helper/extensions/is_mobile.dart';
 import 'package:blog/common/router/app_router.dart';
@@ -26,6 +28,7 @@ import 'package:blog/service_locator.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:confetti/confetti.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -745,6 +748,41 @@ class _EditorScreenState extends State<EditorScreen> {
     }
   }
 
+  Future<void> _uploadMarkdownFile() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['md', 'markdown'],
+      );
+
+      if (result != null && result.files.single.bytes != null) {
+        String fileContent = utf8.decode(result.files.single.bytes!);
+
+        setState(() {
+          _contentController.text = fileContent;
+        });
+
+        customAnimatedSnackbar(
+          context,
+          "Markdown file uploaded",
+          Colors.green,
+          Icons.check,
+        );
+      } else {
+        customAnimatedSnackbar(
+          context,
+          "No file selected or failed to read file bytes",
+          Colors.orange,
+          Icons.info,
+        );
+      }
+    } catch (e) {
+      print('Error uploading markdown file: $e');
+      customAnimatedSnackbar(
+          context, "Failed to extract markdown", Colors.red, Icons.error);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -1091,14 +1129,20 @@ class _EditorScreenState extends State<EditorScreen> {
         'strike',
         'Ctask',
         'UCtask',
-        'image'
+        'image',
+        'upload',
       ].map<DropdownMenuItem<String>>((String value) {
         return _dropDownItem(value, isMobile);
       }).toList(),
       onChanged: (String? value) {
-        setState(() {
-          dropdownValue = value!;
-        });
+        if (dropdownValue == 'upload') {
+          print("want upload");
+          _uploadMarkdownFile();
+        } else {
+          setState(() {
+            dropdownValue = value!;
+          });
+        }
       },
     );
   }

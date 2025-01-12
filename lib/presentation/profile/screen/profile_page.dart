@@ -4,6 +4,7 @@ import 'package:blog/common/helper/extensions/is_mobile.dart';
 import 'package:blog/common/router/app_router.dart';
 import 'package:blog/common/widgets/appbar/appbar.dart';
 import 'package:blog/common/widgets/appbar/basic_button.dart';
+import 'package:blog/core/configs/constants/app_constants/constants.dart';
 import 'package:blog/core/configs/theme/app_colors.dart';
 import 'package:blog/domain/entities/profile/blogs_entity.dart';
 import 'package:blog/presentation/auth/bloc/auth_bloc.dart';
@@ -22,6 +23,7 @@ import 'package:flutter_advanced_avatar/flutter_advanced_avatar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:sizer/sizer.dart';
 import 'package:intl/intl.dart';
 
@@ -91,6 +93,11 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
             (widget.username)
         : isLocal = false;
     print("isLocal: $isLocal");
+  }
+
+  void _shareLink(String link) {
+    String message = 'Check out my profile: $link';
+    Share.share(message, subject: 'Interesting Link');
   }
 
   @override
@@ -308,23 +315,23 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
           ),
         ),
         const SizedBox(width: 30),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name,
-                style: GoogleFonts.spaceGrotesk(
-                    fontSize: context.isMobile ? 24 : 18.sp),
-              ),
-              Text(
-                '@$username',
-                style: GoogleFonts.robotoMono(
-                    fontSize: context.isMobile ? 18 : 12.sp,
-                    color:
-                        context.isDark ? Colors.grey[300] : Colors.grey[700]),
-              ),
-              Text(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              name,
+              style: GoogleFonts.spaceGrotesk(
+                  fontSize: context.isMobile ? 24 : 18.sp),
+            ),
+            Text(
+              '@$username',
+              style: GoogleFonts.robotoMono(
+                  fontSize: context.isMobile ? 18 : 12.sp,
+                  color: context.isDark ? Colors.grey[300] : Colors.grey[700]),
+            ),
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.5,
+              child: Text(
                 bio,
                 softWrap: true,
                 overflow: TextOverflow.visible,
@@ -333,15 +340,15 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
                     color:
                         context.isDark ? Colors.grey[300] : Colors.grey[700]),
               ),
-              const SizedBox(
-                height: 10,
-              ),
-              _followStats(followingCount, followerCount, following, followers),
-              const SizedBox(
-                height: 10,
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            _followStats(followingCount, followerCount, following, followers),
+            const SizedBox(
+              height: 10,
+            ),
+          ],
         ),
       ],
     );
@@ -474,13 +481,17 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
       builder: (context, state) {
         return Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                  color: Colors.transparent,
-                  border: Border.all(color: Colors.grey[300] ?? Colors.grey),
-                  borderRadius: BorderRadius.circular(4)),
-              child: const Icon(Icons.ios_share_rounded, size: 25),
+            GestureDetector(
+              onTap: () => _shareLink(
+                  'https://${Constants.domain}/profile/@${widget.username}'),
+              child: Container(
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    border: Border.all(color: Colors.grey[300] ?? Colors.grey),
+                    borderRadius: BorderRadius.circular(4)),
+                child: const Icon(Icons.ios_share_rounded, size: 25),
+              ),
             ),
             BasicButton(
               enableBorder: state is FollowSuccess ? true : false,
@@ -654,13 +665,11 @@ class _BlogCardState extends State<BlogCard> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 8),
-                      Expanded(
-                        child: Text(
-                          widget.blog.content,
-                          style: GoogleFonts.robotoMono(fontSize: 14),
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      Text(
+                        widget.blog.content,
+                        style: GoogleFonts.robotoMono(fontSize: 14),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   );
