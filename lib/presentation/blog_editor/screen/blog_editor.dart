@@ -104,6 +104,8 @@ class _ScreenContentState extends State<ScreenContent> {
   bool isLoading = true;
   int currentIndex = 1;
   bool isHovering = false;
+  bool isHoveringFutureBuilder = false;
+
   String? selectedValue;
 
   @override
@@ -449,10 +451,20 @@ class _ScreenContentState extends State<ScreenContent> {
       margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
       decoration: BoxDecoration(
           color: ((uid == widget.uid) || isHovering)
-              ? Colors.grey.withOpacity(0.1)
+              ? Colors.grey.withAlpha(25)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(10)),
-      child: Text(uid),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(
+          title == "" ? "Untitled Blog" : title,
+          style: GoogleFonts.spaceGrotesk(),
+        ),
+        Text(
+          uid,
+          style:
+              GoogleFonts.spaceGrotesk(fontSize: 10, color: Colors.grey[400]),
+        ),
+      ]),
     );
   }
 
@@ -462,7 +474,7 @@ class _ScreenContentState extends State<ScreenContent> {
       margin: const EdgeInsets.all(10),
       decoration: BoxDecoration(
           border: Border.all(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withAlpha(25),
             width: 1,
           ),
           color: isDark
@@ -556,12 +568,12 @@ class _ScreenContentState extends State<ScreenContent> {
                     child: MouseRegion(
                       onExit: (event) {
                         setState(() {
-                          isHovering = false;
+                          isHoveringFutureBuilder = false;
                         });
                       },
                       onEnter: (event) {
                         setState(() {
-                          isHovering = true;
+                          isHoveringFutureBuilder = true;
                         });
                       },
                       child: _leftPanelListTile(

@@ -17,7 +17,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:hive_flutter/adapters.dart';
 import 'package:uuid/uuid.dart';
 
 class Home extends StatefulWidget {
@@ -158,6 +157,7 @@ class _HomeState extends State<Home> {
       child: Center(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -170,19 +170,35 @@ class _HomeState extends State<Home> {
               const SizedBox(
                 height: 20,
               ),
-              Text("Locally Available Blogs",
-                  style: GoogleFonts.spaceGrotesk(fontSize: 18)),
+              // Text("Locally Available Blogs",
+              //     style: GoogleFonts.spaceGrotesk(fontSize: 18)),
               ListView.builder(
                 shrinkWrap: true,
                 itemCount: localBlogs.length,
                 itemBuilder: (context, index) {
                   final blog = localBlogs.values.elementAt(index);
-                  return _listItem(
-                      content: blog.content,
-                      title: blog.title,
-                      uid: blog.uid,
-                      published: blog.published,
-                      isLocal: true);
+                  return GestureDetector(
+                    onTap: () {
+                      final extraData = {
+                        'title': blog.title,
+                        'content': blog.content,
+                        'htmlPreview': blog.htmlPreview,
+                        'userUid': blog.userUid,
+                        'published': blog.published
+                      };
+                      // print('Sending data: $extraData'); // Debug print
+                      context.go(
+                        '${AppRouterConstants.newblog}/${blog.uid}',
+                        extra: extraData,
+                      );
+                    },
+                    child: _listItem(
+                        content: blog.content,
+                        title: blog.title,
+                        uid: blog.uid,
+                        published: blog.published,
+                        isLocal: true),
+                  );
                   // return Row(
                   //   children: [
                   //     Expanded(
@@ -198,18 +214,7 @@ class _HomeState extends State<Home> {
                   //           maxLines: 1,
                   //         ),
                   //         onTap: () {
-                  //           final extraData = {
-                  //             'title': blog.title,
-                  //             'content': blog.content,
-                  //             'htmlPreview': blog.htmlPreview,
-                  //             'userUid': blog.userUid,
-                  //             'published': blog.published
-                  //           };
-                  //           // print('Sending data: $extraData'); // Debug print
-                  //           context.go(
-                  //             '${AppRouterConstants.newblog}/${blog.uid}',
-                  //             extra: extraData,
-                  //           );
+
                   //         },
                   //       ),
                   //     ),
@@ -248,12 +253,28 @@ class _HomeState extends State<Home> {
                       if (localBlogs.keys.toList().contains(blog['uid'])) {
                         return const SizedBox.shrink();
                       }
-                      return _listItem(
-                          content: blog['content'],
-                          title: blog['title'],
-                          uid: blog['uid'],
-                          published: blog['published'] ?? false,
-                          isLocal: false);
+                      return GestureDetector(
+                        onTap: () {
+                          final extraData = {
+                            'title': blog['title'],
+                            'content': blog['content'],
+                            'htmlPreview': blog['htmlPreview'] ?? "",
+                            'userUid': userUid,
+                            'published': blog['published'] ?? false
+                          };
+                          // print('Sending data: $extraData'); // Debug print
+                          context.go(
+                            '${AppRouterConstants.newblog}/${blog['uid']}',
+                            extra: extraData,
+                          );
+                        },
+                        child: _listItem(
+                            content: blog['content'],
+                            title: blog['title'],
+                            uid: blog['uid'],
+                            published: blog['published'] ?? false,
+                            isLocal: false),
+                      );
                       // return ListTile(
                       //   title: Text(
                       //       blog['title'] == ""
@@ -268,18 +289,18 @@ class _HomeState extends State<Home> {
                       //   // subtitle: Text(
                       //   //     '${blog['title'] ?? ""} : ${blog['published'] ?? false}'),
                       //   onTap: () {
-                      //     final extraData = {
-                      //       'title': blog['title'],
-                      //       'content': blog['content'],
-                      //       'htmlPreview': blog['htmlPreview'] ?? "",
-                      //       'userUid': userUid,
-                      //       'published': blog['published'] ?? false
-                      //     };
-                      //     // print('Sending data: $extraData'); // Debug print
-                      //     context.go(
-                      //       '${AppRouterConstants.newblog}/${blog['uid']}',
-                      //       extra: extraData,
-                      //     );
+                      // final extraData = {
+                      //   'title': blog['title'],
+                      //   'content': blog['content'],
+                      //   'htmlPreview': blog['htmlPreview'] ?? "",
+                      //   'userUid': userUid,
+                      //   'published': blog['published'] ?? false
+                      // };
+                      // // print('Sending data: $extraData'); // Debug print
+                      // context.go(
+                      //   '${AppRouterConstants.newblog}/${blog['uid']}',
+                      //   extra: extraData,
+                      // );
                       //   },
                       // );
                     },
@@ -299,68 +320,94 @@ class _HomeState extends State<Home> {
       required String content,
       required bool published,
       required bool isLocal}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(title == "" ? "Untitled Artitcle" : title,
-            style: GoogleFonts.spaceGrotesk(fontSize: 20)),
-        Row(
-          children: [
-            Container(
-                width: 40,
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                    color: context.isDark
-                        ? AppColors.primaryDark
-                        : AppColors.primaryLight,
-                    borderRadius: BorderRadius.circular(4)),
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Text(published ? "Yes" : "No",
-                      style: GoogleFonts.spaceGrotesk()),
-                )),
-            Container(
-                width: 40,
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                    color: context.isDark
-                        ? AppColors.primaryDark
-                        : AppColors.primaryLight,
-                    borderRadius: BorderRadius.circular(4)),
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Text(isLocal ? "Yes" : "No",
-                      style: GoogleFonts.spaceGrotesk()),
-                )),
-          ],
-        ),
-      ],
+    return Container(
+      width: MediaQuery.of(context).size.width * (context.isMobile ? 0.7 : 0.5),
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title == "" ? "Untitled Artitcle" : title,
+                    style: GoogleFonts.spaceGrotesk(fontSize: 20)),
+                SizedBox(
+                  width: 300,
+                  child: Text(content == "" ? "No Content" : content,
+                      maxLines: 2,
+                      style: GoogleFonts.spaceGrotesk(
+                          fontSize: 13,
+                          color: Colors.grey[400],
+                          fontWeight: FontWeight.w300)),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Row(
+              children: [
+                Container(
+                    width: 40,
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                        color: context.isDark
+                            ? AppColors.primaryDark
+                            : AppColors.primaryLight,
+                        borderRadius: BorderRadius.circular(4)),
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Text(published ? "Yes" : "No",
+                          style: GoogleFonts.spaceGrotesk()),
+                    )),
+                Container(
+                    width: 40,
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                        color: context.isDark
+                            ? AppColors.primaryDark
+                            : AppColors.primaryLight,
+                        borderRadius: BorderRadius.circular(4)),
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Text(isLocal ? "Yes" : "No",
+                          style: GoogleFonts.spaceGrotesk()),
+                    )),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildChip(String label, bool isActive) {
-    return Chip(
-      label: Text(
-        label,
-        style: GoogleFonts.spaceGrotesk(color: Colors.white),
-      ),
-      elevation: 0,
-      backgroundColor: isActive
-          ? (context.isDark
-              ? AppColors.primaryDark.withAlpha(125)
-              : AppColors.primaryLight.withAlpha(125))
-          : (Colors.red[800] ?? Colors.red).withAlpha(125),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      shape: RoundedRectangleBorder(
-        side: const BorderSide(
-          width: 0,
-        ),
-        borderRadius: BorderRadius.circular(4),
-      ),
-    );
-  }
+  // Widget _buildChip(String label, bool isActive) {
+  //   return Chip(
+  //     label: Text(
+  //       label,
+  //       style: GoogleFonts.spaceGrotesk(color: Colors.white),
+  //     ),
+  //     elevation: 0,
+  //     backgroundColor: isActive
+  //         ? (context.isDark
+  //             ? AppColors.primaryDark.withAlpha(125)
+  //             : AppColors.primaryLight.withAlpha(125))
+  //         : (Colors.red[800] ?? Colors.red).withAlpha(125),
+  //     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+  //     shape: RoundedRectangleBorder(
+  //       side: const BorderSide(
+  //         width: 0,
+  //       ),
+  //       borderRadius: BorderRadius.circular(4),
+  //     ),
+  //   );
+  // }
 
   Widget _blogButton(bool isDark) {
     return Container(

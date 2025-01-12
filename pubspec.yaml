@@ -92,9 +92,9 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - assets/image/mesh/
-  #   - assets/image/mesh/mesh.png
+  assets:
+    - assets/image/mesh/
+    - assets/image/mesh/mesh.png
   # fonts:
   #   - family: GeistSans
   #     fonts:
