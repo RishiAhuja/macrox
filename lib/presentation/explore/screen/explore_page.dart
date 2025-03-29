@@ -633,7 +633,7 @@ class _ExplorePageContentState extends State<ExplorePageContent> {
                       IconButton(
                         onPressed: () {
                           final url =
-                              'https://nexus.rishia.in/blog/@${signal.authors[0]}/${signal.uid}';
+                              'https://nexus.rishia.in/#/blog/@${signal.authors[0]}/${signal.uid}';
                           Share.share(
                               '${signal.title}\n\nConnect with this signal on Nexus: $url');
                         },

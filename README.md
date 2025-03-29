@@ -75,6 +75,72 @@ The project implements Clean Architecture principles and the BLoC pattern for st
 - **UI Components**: Custom-built for web
 - **Testing**: Unit and Widget Tests
 
+### Brand Elements
+
+The Nexus brand is built on several key design principles:
+
+- **Color Palette**: Gradient blues (#0062E6 to #33A9FF) representing depth and connectivity, contrasted with clean whites and deep darks for readability
+- **Typography**: Space Grotesk for headings and interface elements, providing a modern, technical feel with excellent readability
+- **Iconography**: Custom minimal icons focused on connectivity and signal themes
+- **Visual Language**: Wave and pulse motifs that symbolize the amplification of signals across the network
+- **Tone**: Professional but approachable, technical but not intimidating, focused on knowledge sharing and community
+
+## Technical Architecture
+
+Below is a detailed visualization of the Nexus technical architecture:
+
+```mermaid
+graph TD
+    subgraph "Presentation Layer"
+        UI[UI Components]
+        BLOC[BLoC State Management]
+        ROUTES[Go Router]
+    end
+
+    subgraph "Domain Layer"
+        ENTITIES[Entities]
+        REPOS[Repository Interfaces]
+        USECASES[Use Cases]
+    end
+
+    subgraph "Data Layer"
+        REPO_IMPL[Repository Implementations]
+        DS[Data Sources]
+        DTO[Data Transfer Objects]
+    end
+
+    subgraph "Core"
+        ERRORS[Error Handling]
+        UTILS[Utilities]
+        DI[Dependency Injection]
+        CONSTANTS[Constants]
+    end
+
+    subgraph "Firebase Services"
+        AUTH[Authentication]
+        FIRESTORE[Firestore Database]
+        STORAGE[Cloud Storage]
+        FUNCTIONS[Cloud Functions]
+    end
+
+    UI --> BLOC
+    BLOC --> USECASES
+    USECASES --> REPOS
+    REPOS --> ENTITIES
+    REPO_IMPL --> DS
+    REPO_IMPL --> DTO
+    REPOS -.-> REPO_IMPL
+    DS --> FIREBASE
+    ROUTES --> UI
+    DI --> BLOC
+    DI --> REPO_IMPL
+    DI --> USECASES
+
+    DS --> AUTH
+    DS --> FIRESTORE
+    DS --> STORAGE
+    DS --> FUNCTIONS
+    
 ## Getting Started
 
 ### Prerequisites
@@ -180,7 +246,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## Contact
 
-Rishi Ahuja - [@rishiahuja22](https://twitter.com/rishiahuja22)
+Rishi Ahuja - [@rishi2220](https://twitter.com/rishi2220)
 
 Project Link: [https://github.com/RishiAhuja/nexus](https://github.com/RishiAhuja/nexus)
 
