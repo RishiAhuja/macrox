@@ -1,83 +1,17 @@
 import 'package:blog/common/router/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 Widget appBarInfoPopup(
     bool isDark, String name, String username, String email, String id) {
-  return PopupMenuButton<String>(
-    elevation: 0,
-    color: isDark ? const Color.fromARGB(255, 90, 90, 90) : Colors.white,
-    enabled: true,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(4),
-      side: BorderSide(
-        color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
-      ),
-    ),
-    onSelected: (String choice) {},
-    icon: const Icon(Icons.supervised_user_circle_sharp),
-    itemBuilder: (BuildContext context) {
-      return [
-        PopupMenuItem<String>(
-          enabled: true,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: GoogleFonts.spaceGrotesk(fontSize: 24),
-                ),
-                Text(
-                  '@$username',
-                  style: GoogleFonts.spaceGrotesk(
-                      color: isDark ? Colors.grey[300] : Colors.grey[600],
-                      fontSize: 18),
-                ),
-                Text(
-                  email,
-                  style: GoogleFonts.spaceGrotesk(
-                      color: isDark ? Colors.grey[300] : Colors.grey[600],
-                      fontSize: 18),
-                ),
-                Text(
-                  id,
-                  style: GoogleFonts.spaceGrotesk(
-                      color: isDark ? Colors.grey[300] : Colors.grey[600],
-                      fontSize: 18),
-                ),
-              ],
-            ),
-          ),
-        ),
-        PopupMenuItem<String>(
-          onTap: () => context.go(
-            '${AppRouterConstants.profile}/@$username',
-            //   extra: {
-            // 'email': email,
-            // 'name': name,
-            // 'userUid': id,
-            // 'username': username,
-            // }
-          ),
-          enabled: true,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8),
-            child: Row(
-              children: [
-                const Icon(Icons.supervised_user_circle_rounded),
-                const SizedBox(width: 10),
-                Text(
-                  'Go to Profile',
-                  style: GoogleFonts.spaceGrotesk(),
-                )
-              ],
-            ),
-          ),
-        ),
-      ];
-    },
-  );
+  // Return a simple IconButton that navigates directly to the profile page
+  return Builder(builder: (context) {
+    return IconButton(
+      icon: const Icon(Icons.supervised_user_circle_sharp),
+      tooltip: 'View Profile',
+      onPressed: () {
+        context.go('${AppRouterConstants.profile}/@$username');
+      },
+    );
+  });
 }

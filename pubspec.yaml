@@ -66,6 +66,10 @@ dependencies:
   url_launcher: ^6.2.5
   connectivity_plus: ^6.1.1
   share_plus: ^10.0.0
+  animations:
+  flutter_lucide:
+  foundation:
+  equatable:
   
 dev_dependencies:
   flutter_test:
@@ -95,6 +99,7 @@ flutter:
   assets:
     - assets/image/mesh/
     - assets/image/mesh/mesh.png
+    - assets/screenshots/nexus/dashboard.png
   # fonts:
   #   - family: GeistSans
   #     fonts:

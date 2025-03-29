@@ -17,31 +17,40 @@ class BlogModelAdapter extends TypeAdapter<BlogModel> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return BlogModel(
-      published: fields[5] as bool,
-      title: fields[1] as String,
-      content: fields[2] as String,
-      htmlPreview: fields[3] as String,
-      uid: fields[0] as String,
+      title: fields[0] as String,
+      content: fields[1] as String,
+      htmlPreview: fields[2] as String,
+      uid: fields[3] as String,
       userUid: fields[4] as String,
+      publishedTimestamp: fields[5] as bool,
+      authorUid: fields[6] as String,
+      authors: (fields[7] as List).cast<String>(),
+      likedBy: (fields[8] as List).cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, BlogModel obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(9)
       ..writeByte(0)
-      ..write(obj.uid)
-      ..writeByte(1)
       ..write(obj.title)
-      ..writeByte(2)
+      ..writeByte(1)
       ..write(obj.content)
-      ..writeByte(3)
+      ..writeByte(2)
       ..write(obj.htmlPreview)
+      ..writeByte(3)
+      ..write(obj.uid)
       ..writeByte(4)
       ..write(obj.userUid)
       ..writeByte(5)
-      ..write(obj.published);
+      ..write(obj.publishedTimestamp)
+      ..writeByte(6)
+      ..write(obj.authorUid)
+      ..writeByte(7)
+      ..write(obj.authors)
+      ..writeByte(8)
+      ..write(obj.likedBy);
   }
 
   @override

@@ -32,7 +32,7 @@ class PublishBloc extends Bloc<PublishEvent, PublishState> {
                 content: event.requestModel.content,
                 htmlPreview: "",
                 title: event.requestModel.title,
-                published: true));
+                publishedTimestamp: true));
 
         // Update user's blog collection
         // await FirebaseFirestore.instance

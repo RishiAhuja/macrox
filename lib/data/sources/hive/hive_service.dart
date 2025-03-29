@@ -24,7 +24,7 @@ class HiveServiceImpl extends HiveService {
         content: entity.content,
         htmlPreview: entity.htmlPreview,
         userUid: entity.userUid,
-        published: entity.published);
+        publishedTimestamp: entity.publishedTimestamp);
     await blogBox.put(blogModel.uid, blogModel);
   }
 
@@ -39,7 +39,7 @@ class HiveServiceImpl extends HiveService {
           content: model.content,
           htmlPreview: model.htmlPreview,
           userUid: model.userUid,
-          published: model.published);
+          publishedTimestamp: model.publishedTimestamp);
     });
 
     return blogMap;
@@ -54,7 +54,7 @@ class HiveServiceImpl extends HiveService {
         content: entity.content,
         htmlPreview: entity.htmlPreview,
         userUid: entity.userUid,
-        published: entity.published);
+        publishedTimestamp: entity.publishedTimestamp);
     await blogBox.put(entity.uid, blogModel);
   }
 

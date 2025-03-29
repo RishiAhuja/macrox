@@ -107,6 +107,8 @@ class _ScreenContentState extends State<ScreenContent> {
   bool isHoveringFutureBuilder = false;
 
   String? selectedValue;
+  bool isFullscreenEdit = false;
+  bool _sidebarVisible = true; // New state variable to track sidebar visibility
 
   @override
   void initState() {
@@ -135,7 +137,6 @@ class _ScreenContentState extends State<ScreenContent> {
   Future<void> loadBlogs() async {
     try {
       final res = await sl<GetAllUsecase>()();
-      print('Loaded blogs: ${res.length}');
       setState(() {
         localBlogs = res;
         isLoading = false;
@@ -156,6 +157,8 @@ class _ScreenContentState extends State<ScreenContent> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.isDark;
+
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, authState) {
         if (authState is! AuthSuccess) {
@@ -167,162 +170,284 @@ class _ScreenContentState extends State<ScreenContent> {
         }
 
         return Scaffold(
-          appBar: BlogEditorAppbar(
-            mobileDropdown: PopupMenuButton(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
-                side: BorderSide(
-                  color: context.isDark ? Colors.grey[700]! : Colors.grey[300]!,
-                  width: 1,
-                ),
-              ),
-              itemBuilder: (BuildContext context) => [
-                PopupMenuItem(
-                  value: 'CRM',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.copy),
-                      const SizedBox(
-                        width: 5,
-                      ),
-                      Text(
-                        'Copy Raw Markdown',
-                        style: GoogleFonts.robotoMono(
-                          color: context.isDark
-                              ? Colors.grey[300]
-                              : Colors.grey[800],
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'publish',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.publish_rounded),
-                      const SizedBox(
-                        width: 5,
-                      ),
-                      Text(
-                        'Publish',
-                        style: GoogleFonts.robotoMono(
-                          color: context.isDark
-                              ? Colors.grey[300]
-                              : Colors.grey[800],
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-              onSelected: (value) {
-                switch (value) {
-                  case 'CRM':
-                    copyToClipboard(
-                        (context.read<BlogBloc>().state as BlogEditing)
-                            .content);
-                    break;
-                }
-              },
-              icon: const Icon(
-                  Icons.keyboard_arrow_down_rounded), // Three-dot menu icon
-            ),
-            onPressedDraft: () {
-              final blogState = context.read<BlogBloc>().state;
-              if (blogState is BlogEditing) {
-                context.read<BlogBloc>().add(SaveDraft(
-                    uid: widget.uid,
-                    title: blogState.title,
-                    content: blogState.content,
-                    htmlPreview: blogState.htmlPreview,
-                    userUid: authState.userEntity.id,
-                    published: false));
-              }
-            },
-            isMobile: context.isMobile,
-            draftRepacement: BlocBuilder<BlogBloc, BlogState>(
-              builder: (context, state) {
-                return AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: state is BlogSaving
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
+          appBar: isFullscreenEdit
+              ? null
+              : BlogEditorAppbar(
+                  mobileDropdown: context.isMobile
+                      ? PopupMenuButton(
+                          elevation: 3,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: BorderSide(
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.1)
+                                  : Colors.grey[300]!,
+                              width: 1,
+                            ),
+                          ),
+                          itemBuilder: (BuildContext context) => [
+                            PopupMenuItem(
+                              value: 'CRM',
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.copy_outlined,
+                                    size: 18,
+                                    color: isDark
+                                        ? NexusColors.primaryBlue
+                                            .withOpacity(0.8)
+                                        : NexusColors.primaryBlue,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    'Copy Markdown',
+                                    style: GoogleFonts.spaceGrotesk(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: isDark
+                                          ? Colors.white
+                                          : Colors.black87,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: 'publish',
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.send_outlined,
+                                    size: 18,
+                                    color: isDark
+                                        ? NexusColors.primaryBlue
+                                            .withOpacity(0.8)
+                                        : NexusColors.primaryBlue,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    'Publish Signal',
+                                    style: GoogleFonts.spaceGrotesk(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: isDark
+                                          ? Colors.white
+                                          : Colors.black87,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          onSelected: (value) {
+                            switch (value) {
+                              case 'CRM':
+                                copyToClipboard((context.read<BlogBloc>().state
+                                        as BlogEditing)
+                                    .content);
+                                break;
+                            }
+                          },
+                          icon: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.08)
+                                  : Colors.black.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Icon(Icons.more_horiz),
                           ),
                         )
-                      : Text(
-                          'Save Draft',
-                          style: GoogleFonts.robotoMono(
-                            color: context.isDark
-                                ? AppColors.primaryDark
-                                : AppColors.primaryLight,
-                            fontSize: 18,
-                          ),
-                        ),
-                );
-              },
-            ),
-            customActionWidget: appBarInfoPopup(
-              context.isDark,
-              authState.userEntity.name,
-              authState.userEntity.username,
-              authState.userEntity.email,
-              authState.userEntity.id,
-            ),
-            publishRepacement: BlocBuilder<PublishBloc, PublishState>(
-                builder: (context, state) {
-              return AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: state is PublishLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : Text(
-                        widget.published ? 'Update' : 'Publish',
-                        style: GoogleFonts.robotoMono(
-                          color: Colors.white,
-                          fontSize: 18,
-                        ),
-                      ),
-              );
-            }),
-            onPressedPublish: () {
-              final authState = context.read<AuthBloc>().state as AuthSuccess;
-              final blogState = context.read<BlogBloc>().state as BlogEditing;
-              final String blogUid =
-                  GoRouterState.of(context).pathParameters['uid'] ?? '';
+                      : null,
+                  onPressedDraft: () {
+                    final blogState = context.read<BlogBloc>().state;
+                    if (blogState is BlogEditing) {
+                      context.read<BlogBloc>().add(SaveDraft(
+                          uid: widget.uid,
+                          title: blogState.title,
+                          content: blogState.content,
+                          htmlPreview: blogState.htmlPreview,
+                          userUid: authState.userEntity.id,
+                          published: false));
+                    }
+                  },
+                  isMobile: context.isMobile,
+                  draftReplacement: BlocBuilder<BlogBloc, BlogState>(
+                    builder: (context, state) {
+                      return AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child: state is BlogSaving
+                            ? Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? Colors.white.withOpacity(0.1)
+                                      : NexusColors.primaryBlue
+                                          .withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      isDark
+                                          ? Colors.white
+                                          : NexusColors.primaryBlue,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? Colors.white.withOpacity(0.1)
+                                      : NexusColors.primaryBlue
+                                          .withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: isDark
+                                        ? Colors.white.withOpacity(0.2)
+                                        : NexusColors.primaryBlue
+                                            .withOpacity(0.2),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.save_outlined,
+                                      size: 16,
+                                      color: isDark
+                                          ? Colors.white
+                                          : NexusColors.primaryBlue,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Save Draft',
+                                      style: GoogleFonts.spaceGrotesk(
+                                        color: isDark
+                                            ? Colors.white
+                                            : NexusColors.primaryBlue,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                      );
+                    },
+                  ),
+                  customActionWidget: appBarInfoPopup(
+                    isDark,
+                    authState.userEntity.name,
+                    authState.userEntity.username,
+                    authState.userEntity.email,
+                    authState.userEntity.id,
+                  ),
+                  publishRepacement: BlocBuilder<PublishBloc, PublishState>(
+                    builder: (context, state) {
+                      return AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child: state is PublishLoading
+                            ? Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                margin: const EdgeInsets.only(right: 12),
+                                decoration: BoxDecoration(
+                                  color: NexusColors.primaryBlue,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
+                                  ),
+                                ),
+                              )
+                            : Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                margin: const EdgeInsets.only(right: 12),
+                                decoration: BoxDecoration(
+                                  color: NexusColors.primaryBlue,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      widget.published
+                                          ? Icons.update
+                                          : Icons.send_outlined,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      widget.published ? 'Update' : 'Publish',
+                                      style: GoogleFonts.spaceGrotesk(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                      );
+                    },
+                  ),
+                  onPressedPublish: () {
+                    final authState =
+                        context.read<AuthBloc>().state as AuthSuccess;
+                    final blogState =
+                        context.read<BlogBloc>().state as BlogEditing;
+                    final String blogUid =
+                        GoRouterState.of(context).pathParameters['uid'] ?? '';
 
-              final publishModel = BlogPublishModel(
-                userUid: widget.userUid,
-                blogUid: blogUid,
-                content: blogState.content,
-                title: blogState.title,
-                authors: [authState.userEntity.username],
-                authorUid: [authState.userEntity.id],
-                likedBy: [],
-                likes: 0,
-                status: 'up',
-                publishedTimestamp: FieldValue.serverTimestamp(),
-              );
-              context
-                  .read<PublishBloc>()
-                  .add(InitiatePublishRequest(requestModel: publishModel));
-            },
-          ),
+                    final publishModel = BlogPublishModel(
+                      userUid: widget.userUid,
+                      blogUid: blogUid,
+                      content: blogState.content,
+                      title: blogState.title,
+                      authors: [authState.userEntity.username],
+                      authorUid: [authState.userEntity.id],
+                      likedBy: [],
+                      likes: 0,
+                      status: 'up',
+                      publishedTimestamp: FieldValue.serverTimestamp(),
+                    );
+                    context.read<PublishBloc>().add(
+                        InitiatePublishRequest(requestModel: publishModel));
+                  },
+                ),
           body: MultiBlocListener(
             listeners: [
               BlocListener<BlogBloc, BlogState>(
@@ -341,15 +466,30 @@ class _ScreenContentState extends State<ScreenContent> {
                 listener: (context, state) {
                   if (state is PublishSuccess) {
                     _controllerCenter.play();
-                    context.go(
-                        '/blog/@${authState.userEntity.username}/${widget.uid}');
+
+                    // Get the current auth state safely
+                    final currentAuthState = context.read<AuthBloc>().state;
+                    if (currentAuthState is AuthSuccess) {
+                      context.go(
+                        '/blog/@${currentAuthState.userEntity.username}/${widget.uid}',
+                      );
+
+                      // Show success message
+                      customAnimatedSnackbar(
+                        context,
+                        'Signal published successfully!',
+                        Colors.green,
+                        Icons.check_circle,
+                      );
+                    }
                   }
                   if (state is PublishFailed) {
                     customAnimatedSnackbar(
-                        context,
-                        'Failed to publish: ${state.errorMessage}',
-                        Colors.red,
-                        Icons.error);
+                      context,
+                      'Failed to publish: ${state.errorMessage}',
+                      Colors.red,
+                      Icons.error,
+                    );
                   }
                 },
               ),
@@ -359,83 +499,415 @@ class _ScreenContentState extends State<ScreenContent> {
                 BlocBuilder<BlogBloc, BlogState>(
                   builder: (context, blogState) {
                     return ResponsiveLayout(
-                        mobileWidget: Center(
-                            child: CarouselSlider(
-                          options: CarouselOptions(
-                            height: MediaQuery.of(context).size.height,
-                            initialPage: currentIndex,
-                            enableInfiniteScroll: false,
-                            enlargeCenterPage: true,
-                            viewportFraction: 1.0,
-                            onPageChanged: (index, reason) {
-                              setState(() {
-                                currentIndex = index;
-                              });
-                            },
-                          ),
-                          items: [
-                            _buildLeftPanel(context.isDark),
-                            EditorScreen(
-                              uid: widget.uid,
-                              title: widget.title,
-                              content: widget.content,
-                              htmlPreview: widget.content,
-                            ),
-                            _buildPreview(blogState, context.isDark)
-                          ].map((widget) {
-                            return Builder(
-                              builder: (BuildContext context) {
-                                return SizedBox(
-                                  width: MediaQuery.of(context).size.width,
-                                  child: widget,
-                                );
-                              },
-                            );
-                          }).toList(),
-                        )),
-                        desktopWidget: Center(
-                            child: Row(
+                      mobileWidget: Center(
+                        child: Column(
                           children: [
-                            Expanded(
-                                flex: 2,
-                                child: _buildLeftPanel(context.isDark)),
-                            Expanded(
-                                flex: 5,
-                                child: EditorScreen(
-                                  uid: widget.uid,
-                                  title: widget.title,
-                                  content: widget.content,
-                                  htmlPreview: widget.content,
-                                )),
-                            Expanded(
-                                flex: 5,
-                                child:
-                                    _buildPreview(blogState, context.isDark)),
+                            // Padding(
+                            //   padding: const EdgeInsets.symmetric(
+                            //       horizontal: 8.0, vertical: 4.0),
+                            //   child: Row(
+                            //     mainAxisAlignment:
+                            //         MainAxisAlignment.spaceBetween,
+                            //     children: [
+                            //       Text(
+                            //         currentIndex == 0
+                            //             ? 'Library'
+                            //             : currentIndex == 1
+                            //                 ? 'Editor'
+                            //                 : 'Preview',
+                            //         style: GoogleFonts.spaceGrotesk(
+                            //           color: isDark
+                            //               ? Colors.white70
+                            //               : Colors.black54,
+                            //           fontSize: 12,
+                            //         ),
+                            //       ),
+                            //       Row(
+                            //         children: [
+                            //           Icon(
+                            //             Icons.swipe,
+                            //             size: 14,
+                            //             color: isDark
+                            //                 ? Colors.white70
+                            //                 : Colors.black54,
+                            //           ),
+                            //           const SizedBox(width: 4),
+                            //           Text(
+                            //             'Swipe to navigate',
+                            //             style: GoogleFonts.spaceGrotesk(
+                            //               color: isDark
+                            //                   ? Colors.white70
+                            //                   : Colors.black54,
+                            //               fontSize: 12,
+                            //             ),
+                            //           ),
+                            //         ],
+                            //       ),
+                            //     ],
+                            //   ),
+                            // ),
+                            Stack(
+                              children: [
+                                CarouselSlider(
+                                  options: CarouselOptions(
+                                    height: MediaQuery.of(context).size.height,
+                                    initialPage: currentIndex,
+                                    enableInfiniteScroll: false,
+                                    enlargeCenterPage: true,
+                                    viewportFraction: 1.0,
+                                    onPageChanged: (index, reason) {
+                                      setState(() {
+                                        currentIndex = index;
+                                      });
+                                    },
+                                  ),
+                                  items: [
+                                    _buildLeftPanel(isDark),
+                                    EditorScreen(
+                                      uid: widget.uid,
+                                      title: widget.title,
+                                      content: widget.content,
+                                      htmlPreview: widget.content,
+                                    ),
+                                    _buildPreview(blogState, isDark)
+                                  ].map((widget) {
+                                    return Builder(
+                                      builder: (BuildContext context) {
+                                        return SizedBox(
+                                          width:
+                                              MediaQuery.of(context).size.width,
+                                          child: widget,
+                                        );
+                                      },
+                                    );
+                                  }).toList(),
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [0, 1, 2].map((i) {
+                                    return Container(
+                                      width: 8.0,
+                                      height: 8.0,
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 4.0),
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: currentIndex == i
+                                            ? NexusColors.primaryBlue
+                                            : (isDark
+                                                ? Colors.white30
+                                                : Colors.black26),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            ),
                           ],
-                        )));
+                        ),
+                      ),
+                      desktopWidget: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            width: _sidebarVisible ? 300 : 0,
+                            height: MediaQuery.of(context).size.height,
+                            decoration: BoxDecoration(
+                              border: Border(
+                                right: BorderSide(
+                                  color: isDark
+                                      ? Colors.white.withOpacity(0.1)
+                                      : Colors.black.withOpacity(0.05),
+                                  width: 1,
+                                ),
+                              ),
+                              color: isDark
+                                  ? NexusColors.darkSurface
+                                  : Colors.white,
+                            ),
+                            child: _sidebarVisible
+                                ? Container(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              "Signal Library",
+                                              style: GoogleFonts.spaceGrotesk(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: isDark
+                                                    ? Colors.white
+                                                    : Colors.black87,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 16),
+                                        _buildSectionHeader(
+                                            "Local Signals", isDark),
+                                        const SizedBox(height: 12),
+                                        Expanded(
+                                          child: SingleChildScrollView(
+                                            child: Column(
+                                              children: [
+                                                isLoading
+                                                    ? const Center(
+                                                        child:
+                                                            CircularProgressIndicator())
+                                                    : ListView.builder(
+                                                        shrinkWrap: true,
+                                                        physics:
+                                                            const NeverScrollableScrollPhysics(),
+                                                        itemCount:
+                                                            localBlogs.length,
+                                                        itemBuilder:
+                                                            (context, index) {
+                                                          final blog =
+                                                              localBlogs.values
+                                                                  .elementAt(
+                                                                      index);
+                                                          return GestureDetector(
+                                                            onTap: () {
+                                                              context
+                                                                  .read<
+                                                                      BlogBloc>()
+                                                                  .add(
+                                                                    ContentChanged(
+                                                                      title: blog
+                                                                          .title,
+                                                                      content: blog
+                                                                          .content,
+                                                                    ),
+                                                                  );
+                                                              loadBlogs();
+                                                              context.go(
+                                                                '${AppRouterConstants.newblog}/${blog.uid}',
+                                                                extra: {
+                                                                  'title': blog
+                                                                      .title,
+                                                                  'content': blog
+                                                                      .content,
+                                                                  'htmlPreview':
+                                                                      blog.htmlPreview,
+                                                                  'shouldRefresh':
+                                                                      true,
+                                                                },
+                                                              );
+                                                            },
+                                                            child: MouseRegion(
+                                                              onExit: (event) {
+                                                                setState(() {
+                                                                  isHovering =
+                                                                      false;
+                                                                });
+                                                              },
+                                                              onEnter: (event) {
+                                                                setState(() {
+                                                                  isHovering =
+                                                                      true;
+                                                                });
+                                                              },
+                                                              child:
+                                                                  _buildSignalListItem(
+                                                                blog.uid,
+                                                                blog.title,
+                                                                isHovering,
+                                                                blog.publishedTimestamp,
+                                                                isLocal: true,
+                                                              ),
+                                                            ),
+                                                          );
+                                                        },
+                                                      ),
+
+                                                const SizedBox(height: 24),
+
+                                                // Network signals section
+                                                _buildSectionHeader(
+                                                    "Network Signals", isDark),
+                                                const SizedBox(height: 12),
+
+                                                // Remote blogs list
+                                                FutureBuilder<QuerySnapshot>(
+                                                  future: _blogsFuture,
+                                                  builder: (context, snapshot) {
+                                                    if (snapshot
+                                                            .connectionState ==
+                                                        ConnectionState
+                                                            .waiting) {
+                                                      return const Center(
+                                                        child: Padding(
+                                                          padding:
+                                                              EdgeInsets.all(
+                                                                  24),
+                                                          child:
+                                                              CircularProgressIndicator(),
+                                                        ),
+                                                      );
+                                                    }
+
+                                                    final docs =
+                                                        snapshot.data?.docs ??
+                                                            [];
+                                                    return ListView.builder(
+                                                      shrinkWrap: true,
+                                                      physics:
+                                                          const NeverScrollableScrollPhysics(),
+                                                      itemCount: docs.length,
+                                                      itemBuilder:
+                                                          (context, index) {
+                                                        final blog =
+                                                            docs[index].data()
+                                                                as Map<String,
+                                                                    dynamic>;
+                                                        if (localBlogs
+                                                            .containsKey(
+                                                                blog['uid'])) {
+                                                          return const SizedBox
+                                                              .shrink();
+                                                        }
+                                                        return GestureDetector(
+                                                          onTap: () {
+                                                            context
+                                                                .read<
+                                                                    BlogBloc>()
+                                                                .add(
+                                                                  ContentChanged(
+                                                                    title: blog[
+                                                                            'title'] ??
+                                                                        '',
+                                                                    content:
+                                                                        blog['content'] ??
+                                                                            '',
+                                                                  ),
+                                                                );
+                                                            context.go(
+                                                              '${AppRouterConstants.newblog}/${blog['uid']}',
+                                                              extra: {
+                                                                'title': blog[
+                                                                        'title'] ??
+                                                                    '',
+                                                                'content': blog[
+                                                                        'content'] ??
+                                                                    '',
+                                                                'htmlPreview':
+                                                                    blog['htmlPreview'] ??
+                                                                        '',
+                                                                'shouldRefresh':
+                                                                    true,
+                                                              },
+                                                            );
+                                                          },
+                                                          child: MouseRegion(
+                                                            onExit: (event) {
+                                                              setState(() {
+                                                                isHoveringFutureBuilder =
+                                                                    false;
+                                                              });
+                                                            },
+                                                            onEnter: (event) {
+                                                              setState(() {
+                                                                isHoveringFutureBuilder =
+                                                                    true;
+                                                              });
+                                                            },
+                                                            child:
+                                                                _buildSignalListItem(
+                                                              blog['uid'] ?? '',
+                                                              blog['title'] ??
+                                                                  'Untitled',
+                                                              isHoveringFutureBuilder,
+                                                              blog['published'] ??
+                                                                  false,
+                                                              isLocal: false,
+                                                            ),
+                                                          ),
+                                                        );
+                                                      },
+                                                    );
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : null,
+                          ),
+
+                          // Main content area - Editor and Preview
+                          Expanded(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Toggle sidebar button
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  width: 24,
+                                  height: MediaQuery.of(context).size.height,
+                                  // decoration: BoxDecoration(
+                                  //   color: isDark
+                                  //       ? Colors.black.withOpacity(0.2)
+                                  //       : Colors.grey.withOpacity(0.1),
+                                  // ),
+                                  child: Center(
+                                    child: IconButton(
+                                      icon: Icon(
+                                        _sidebarVisible
+                                            ? Icons.chevron_left
+                                            : Icons.chevron_right,
+                                        size: 20,
+                                        color: isDark
+                                            ? Colors.white70
+                                            : Colors.black54,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _sidebarVisible = !_sidebarVisible;
+                                        });
+                                      },
+                                      tooltip: _sidebarVisible
+                                          ? 'Hide sidebar'
+                                          : 'Show sidebar',
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      splashRadius: 12,
+                                    ),
+                                  ),
+                                ),
+
+                                // Editor
+                                Expanded(
+                                  flex: 1,
+                                  child: EditorScreen(
+                                    uid: widget.uid,
+                                    title: widget.title,
+                                    content: widget.content,
+                                    htmlPreview: widget.htmlPreview,
+                                  ),
+                                ),
+
+                                // Preview
+                                Expanded(
+                                  flex: 1,
+                                  child: _buildPreview(blogState, isDark),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
                   },
-                ),
-                Align(
-                  alignment: Alignment.center,
-                  child: ConfettiWidget(
-                    emissionFrequency: 0.8,
-                    minimumSize: const Size(4, 4),
-                    maximumSize: const Size(12, 12),
-                    numberOfParticles: 100,
-                    gravity: 0.1,
-                    confettiController: _controllerCenter,
-                    blastDirectionality: BlastDirectionality
-                        .explosive, // don't specify a direction, blast randomly
-                    shouldLoop:
-                        false, // start again as soon as the animation is finished
-                    colors: const [
-                      Colors.green,
-                      Colors.blue,
-                      Colors.pink,
-                      Colors.orange,
-                      Colors.purple
-                    ], // manually specify the colors to be used
-                  ),
                 ),
               ],
             ),
@@ -445,174 +917,164 @@ class _ScreenContentState extends State<ScreenContent> {
     );
   }
 
-  Widget _leftPanelListTile(String uid, String title, bool isHovering) {
+  Widget _buildSignalListItem(
+      String uid, String title, bool isHovering, bool isPublished,
+      {bool isLocal = true}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-      margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-          color: ((uid == widget.uid) || isHovering)
-              ? Colors.grey.withAlpha(25)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(10)),
+        color: (uid == widget.uid)
+            ? NexusColors.primaryBlue.withOpacity(0.1)
+            : isHovering
+                ? Colors.grey.withOpacity(0.05)
+                : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        border: uid == widget.uid
+            ? Border.all(
+                color: NexusColors.primaryBlue.withOpacity(0.3),
+                width: 1,
+              )
+            : null,
+      ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(
-          title == "" ? "Untitled Blog" : title,
-          style: GoogleFonts.spaceGrotesk(),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                title.isEmpty ? "Untitled Signal" : title,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 14,
+                  fontWeight:
+                      uid == widget.uid ? FontWeight.w600 : FontWeight.normal,
+                  color: uid == widget.uid
+                      ? NexusColors.primaryBlue
+                      : (context.isDark ? Colors.white : Colors.black87),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: isPublished
+                    ? NexusColors.signalGreen.withOpacity(0.1)
+                    : NexusColors.signalGray.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                isPublished ? 'Live' : 'Draft',
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: isPublished
+                      ? NexusColors.signalGreen
+                      : NexusColors.signalGray,
+                ),
+              ),
+            ),
+          ],
         ),
-        Text(
-          uid,
-          style:
-              GoogleFonts.spaceGrotesk(fontSize: 10, color: Colors.grey[400]),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Icon(
+              isLocal ? Icons.storage_outlined : Icons.cloud_outlined,
+              size: 12,
+              color: context.isDark ? Colors.white38 : Colors.black38,
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                uid,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 10,
+                  color: context.isDark ? Colors.white38 : Colors.black38,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
       ]),
     );
   }
 
-  Widget _buildLeftPanel(bool isDark) {
+  Widget _buildPreview(state, bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       margin: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.grey.withAlpha(25),
-            width: 1,
-          ),
+        border: Border.all(
           color: isDark
-              ? AppColors.darkLightBackground
-              : AppColors.lightLightBackground,
-          borderRadius: BorderRadius.circular(10)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Align(
-              alignment: Alignment.centerRight,
-              child: Icon(Icons.arrow_right_rounded)),
-          Text("Locally Available Blogs",
-              style: GoogleFonts.spaceGrotesk(fontSize: 16)),
-          ListView.builder(
-            shrinkWrap: true,
-            itemCount: localBlogs.length,
-            itemBuilder: (context, index) {
-              final blog = localBlogs.values.elementAt(index);
-              return GestureDetector(
-                  onTap: () {
-                    context.read<BlogBloc>().add(
-                          ContentChanged(
-                            title: blog.title,
-                            content: blog.content,
-                          ),
-                        );
-                    loadBlogs();
-                    context.go(
-                      '${AppRouterConstants.newblog}/${blog.uid}',
-                      extra: {
-                        'title': blog.title,
-                        'content': blog.content,
-                        'htmlPreview': blog.htmlPreview,
-                        'shouldRefresh': true, // Flag to force refresh
-                      },
-                    );
-                  },
-                  child: MouseRegion(
-                      onExit: (event) {
-                        setState(() {
-                          isHovering = false;
-                        });
-                      },
-                      onEnter: (event) {
-                        setState(() {
-                          isHovering = true;
-                        });
-                      },
-                      child: _leftPanelListTile(
-                          blog.uid, blog.title, isHovering)));
-            },
-          ),
-          const SizedBox(height: 20),
-          Text("Remote Blogs", style: GoogleFonts.spaceGrotesk(fontSize: 16)),
-          FutureBuilder<QuerySnapshot>(
-            future: _blogsFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              final docs = snapshot.data?.docs ?? [];
-              return ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: docs.length,
-                itemBuilder: (context, index) {
-                  final blog = docs[index].data() as Map<String, dynamic>;
-                  if (localBlogs.containsKey(blog['uid'])) {
-                    return const SizedBox.shrink();
-                  }
-                  return GestureDetector(
-                    onTap: () {
-                      context.read<BlogBloc>().add(
-                            ContentChanged(
-                              title: blog['title'],
-                              content: blog['content'],
-                            ),
-                          );
-                      context.go(
-                        '${AppRouterConstants.newblog}/${blog['uid']}',
-                        extra: {
-                          'title': blog['title'],
-                          'content': blog['content'],
-                          'htmlPreview': blog['htmlPreview'],
-                          'shouldRefresh': true, // Flag to force refresh
-                        },
-                      );
-                    },
-                    child: MouseRegion(
-                      onExit: (event) {
-                        setState(() {
-                          isHoveringFutureBuilder = false;
-                        });
-                      },
-                      onEnter: (event) {
-                        setState(() {
-                          isHoveringFutureBuilder = true;
-                        });
-                      },
-                      child: _leftPanelListTile(
-                        blog['uid'],
-                        blog['title'] ?? 'Untitled',
-                        false,
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.05),
+          width: 1,
+        ),
+        color: isDark ? NexusColors.darkSurface : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildPreview(state, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      margin: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.grey.withOpacity(0.1),
-            width: 1,
-          ),
-          color: isDark
-              ? AppColors.darkLightBackground
-              : AppColors.lightLightBackground,
-          borderRadius: BorderRadius.circular(10)),
       child: state is BlogEditing
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Text(state.title,
-                      style: GoogleFonts.spaceGrotesk(fontSize: 37)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Text(
+                          state.title.isEmpty ? "Untitled Signal" : state.title,
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            height: 1.3,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: NexusColors.primaryBlue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: NexusColors.primaryBlue.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        'Preview',
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: NexusColors.primaryBlue,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  height: 1,
+                  color: isDark
+                      ? Colors.white.withOpacity(0.08)
+                      : Colors.black.withOpacity(0.05),
+                  margin: const EdgeInsets.only(bottom: 24),
                 ),
                 Expanded(
                   child: Markdown(
@@ -627,17 +1089,45 @@ class _ScreenContentState extends State<ScreenContent> {
                             maxWidth: MediaQuery.of(context).size.width * 0.8,
                           ),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(12),
                             child: Image.network(
                               uri.toString(),
-                              // 'https://images.pexels.com/photos/674010/pexels-photo-674010.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
                               loadingBuilder: (_, child, loadingProgress) {
                                 if (loadingProgress == null) return child;
-                                return const Center(
-                                    child: CircularProgressIndicator());
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    color: NexusColors.primaryBlue,
+                                    value: loadingProgress.expectedTotalBytes !=
+                                            null
+                                        ? loadingProgress
+                                                .cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
+                                  ),
+                                );
                               },
-                              errorBuilder: (_, error, __) =>
-                                  const Icon(Icons.error),
+                              errorBuilder: (_, error, __) => Container(
+                                height: 200,
+                                width: double.infinity,
+                                color: Colors.grey.withOpacity(0.1),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.broken_image_outlined,
+                                      size: 40,
+                                      color: Colors.grey,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Image loading failed',
+                                      style: GoogleFonts.spaceGrotesk(
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -653,48 +1143,220 @@ class _ScreenContentState extends State<ScreenContent> {
                       }
                     },
                     styleSheet: MarkdownStyleSheet(
-                      p: GoogleFonts.robotoMono(),
-                      h1: GoogleFonts.robotoMono(fontSize: 30),
-                      h2: GoogleFonts.robotoMono(fontSize: 24),
-                      h3: GoogleFonts.robotoMono(fontSize: 20),
-                      code: GoogleFonts.firaCode(
-                        backgroundColor:
-                            isDark ? Colors.grey[900] : Colors.grey[300],
-                        color: isDark ? Colors.grey[300] : Colors.grey[900],
+                      p: GoogleFonts.spaceGrotesk(
                         fontSize: 16,
+                        height: 1.6,
+                        color: isDark
+                            ? Colors.white.withOpacity(0.9)
+                            : Colors.black87,
+                      ),
+                      h1: GoogleFonts.spaceGrotesk(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        height: 1.3,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                      h2: GoogleFonts.spaceGrotesk(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        height: 1.3,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                      h3: GoogleFonts.spaceGrotesk(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        height: 1.3,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                      code: GoogleFonts.firaCode(
+                        backgroundColor: isDark
+                            ? Colors.black.withOpacity(0.6)
+                            : Colors.grey[100],
+                        color: isDark
+                            ? Colors.greenAccent.shade200
+                            : Colors.green.shade800,
+                        fontSize: 14,
                       ),
                       codeblockDecoration: BoxDecoration(
-                        color: isDark ? Colors.grey[900] : Colors.grey[300],
+                        color: isDark
+                            ? Colors.black.withOpacity(0.6)
+                            : Colors.grey[100],
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: Colors.grey[700]!,
+                          color:
+                              isDark ? Colors.grey.shade800 : Colors.grey[300]!,
                           width: 1,
                         ),
                       ),
-                      blockquote: GoogleFonts.robotoMono(
-                        fontSize: 21,
+                      codeblockPadding: const EdgeInsets.all(12),
+                      tableBody: GoogleFonts.spaceGrotesk(
+                        fontSize: 14,
+                        color: isDark
+                            ? Colors.white.withOpacity(0.9)
+                            : Colors.black87,
+                      ),
+                      tableHead: GoogleFonts.spaceGrotesk(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                      tableBorder: TableBorder.all(
+                        color: isDark
+                            ? Colors.white.withOpacity(0.2)
+                            : Colors.grey[300]!,
+                        width: 1,
+                      ),
+                      blockquote: GoogleFonts.spaceGrotesk(
+                        fontSize: 16,
                         fontStyle: FontStyle.italic,
-                        color: Colors.grey[400],
+                        color: isDark ? Colors.white70 : Colors.black54,
+                        height: 1.6,
                       ),
                       blockquoteDecoration: BoxDecoration(
                         border: Border(
                           left: BorderSide(
-                            color: Colors.grey[700]!,
+                            color: NexusColors.primaryBlue.withOpacity(0.5),
                             width: 4,
                           ),
                         ),
                       ),
-                      blockquotePadding: const EdgeInsets.only(left: 20),
+                      blockquotePadding: const EdgeInsets.only(
+                          left: 20, top: 12, bottom: 12, right: 8),
+                      listBullet: GoogleFonts.spaceGrotesk(
+                        fontSize: 16,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
                     ),
                   ),
                 ),
               ],
             )
           : Center(
-              child: Text(
-              'Preview will appear here',
-              style: GoogleFonts.robotoMono(),
-            )),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.preview_outlined,
+                    size: 48,
+                    color: isDark
+                        ? Colors.white.withOpacity(0.3)
+                        : Colors.black.withOpacity(0.3),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Signal preview will appear here',
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 16,
+                      color: isDark ? Colors.white54 : Colors.black45,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Start typing in the editor',
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 14,
+                      color: isDark ? Colors.white38 : Colors.black38,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: NexusColors.primaryBlue,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 1,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                NexusColors.primaryBlue.withOpacity(0.5),
+                NexusColors.primaryBlue.withOpacity(0.0),
+              ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLeftPanel(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: isDark ? NexusColors.darkSurface : Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Signal Library",
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Local signals section
+          _buildSectionHeader("Local Signals", isDark),
+          const SizedBox(height: 12),
+          // Local blogs list
+          Expanded(
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : localBlogs.isEmpty
+                    ? Center(
+                        child: Text(
+                          "No local signals found",
+                          style: GoogleFonts.spaceGrotesk(
+                            color: isDark ? Colors.white60 : Colors.black45,
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: localBlogs.length,
+                        itemBuilder: (context, index) {
+                          final blog = localBlogs.values.elementAt(index);
+                          return GestureDetector(
+                            onTap: () {
+                              context.read<BlogBloc>().add(
+                                    ContentChanged(
+                                      title: blog.title,
+                                      content: blog.content,
+                                    ),
+                                  );
+                              setState(() {
+                                currentIndex = 1; // Switch to editor
+                              });
+                            },
+                            child: _buildSignalListItem(
+                              blog.uid,
+                              blog.title,
+                              false,
+                              blog.publishedTimestamp,
+                              isLocal: true,
+                            ),
+                          );
+                        },
+                      ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -797,28 +1459,37 @@ class _EditorScreenState extends State<EditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = context.isMobile;
+
     return Column(
       children: [
+        // Main editor area - now wrapped in a ScrollView
         Expanded(
           flex: 9,
-          child: Container(
+          child: SingleChildScrollView(
+            child: Container(
               padding: const EdgeInsets.all(20),
               margin: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.grey.withOpacity(0.1),
-                    width: 1,
-                  ),
-                  color: context.isDark
-                      ? AppColors.darkLightBackground
-                      : AppColors.lightLightBackground,
-                  borderRadius: BorderRadius.circular(10)),
+                border: Border.all(
+                  color: Colors.grey.withOpacity(0.1),
+                  width: 1,
+                ),
+                color: context.isDark
+                    ? AppColors.darkLightBackground
+                    : AppColors.lightLightBackground,
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (context.isMobile)
+                  if (isMobile)
                     const Align(
-                        alignment: Alignment.centerRight,
-                        child: Icon(Icons.compare_arrows_outlined)),
+                      alignment: Alignment.centerRight,
+                      child: Icon(Icons.compare_arrows_outlined),
+                    ),
+
+                  // Title field
                   TextFormField(
                     controller: _articleController,
                     onChanged: (value) {
@@ -827,170 +1498,339 @@ class _EditorScreenState extends State<EditorScreen> {
                           content: content));
                     },
                     maxLines: null,
-                    cursorColor: AppColors.primaryLight,
+                    cursorColor: NexusColors.primaryBlue,
                     style: GoogleFonts.spaceGrotesk(
-                        fontSize: context.isMobile ? 22 : 28,
-                        fontWeight: FontWeight.w500),
+                        fontSize: isMobile ? 22 : 32,
+                        fontWeight: FontWeight.w600,
+                        height: 1.3,
+                        color: context.isDark ? Colors.white : Colors.black87),
                     decoration: InputDecoration(
-                      hintText: 'Article Title..',
-                      hintStyle: GoogleFonts.robotoMono(),
+                      hintText: 'Signal Title...',
+                      hintStyle: GoogleFonts.spaceGrotesk(
+                        color: context.isDark ? Colors.white38 : Colors.black38,
+                        fontSize: isMobile ? 22 : 32,
+                        fontWeight: FontWeight.w500,
+                      ),
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,
                       errorBorder: InputBorder.none,
                       disabledBorder: InputBorder.none,
-                      contentPadding:
-                          const EdgeInsets.only(left: 15, right: 15),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
                     ),
                   ),
                   const SizedBox(height: 8),
                   const Divider(),
                   const SizedBox(height: 10),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: TextFormField(
-                        controller: _contentController,
-                        onChanged: (value) {
-                          content = value;
-                          context.read<BlogBloc>().add(ContentChanged(
-                              content: content,
-                              title: _articleController.text.trim()));
-                        },
-                        maxLines: null,
-                        keyboardType: TextInputType.multiline,
-                        cursorColor: AppColors.primaryLight,
-                        style: GoogleFonts.robotoMono(
-                            fontSize: context.isMobile ? 12 : 16,
-                            fontWeight: FontWeight.w500),
-                        decoration: InputDecoration(
-                          hintText: 'Start writing markdown here..',
-                          hintStyle: GoogleFonts.robotoMono(),
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          errorBorder: InputBorder.none,
-                          disabledBorder: InputBorder.none,
-                          contentPadding:
-                              const EdgeInsets.only(left: 15, right: 15),
+
+                  // Markdown content area - no longer in a ScrollView
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: context.isDark
+                          ? Colors.white.withOpacity(0.03)
+                          : Colors.black.withOpacity(0.02),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: TextFormField(
+                      controller: _contentController,
+                      onChanged: (value) {
+                        content = value;
+                        context.read<BlogBloc>().add(ContentChanged(
+                            content: content,
+                            title: _articleController.text.trim()));
+                      },
+                      maxLines: null,
+                      keyboardType: TextInputType.multiline,
+                      cursorColor: NexusColors.primaryBlue,
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: isMobile ? 14 : 16,
+                        fontWeight: FontWeight.normal,
+                        height: 1.6,
+                        color: context.isDark
+                            ? Colors.white.withOpacity(0.9)
+                            : Colors.black87,
+                      ),
+                      decoration: InputDecoration(
+                        hintText:
+                            'Start broadcasting your signal in markdown...',
+                        hintStyle: GoogleFonts.spaceGrotesk(
+                          fontSize: isMobile ? 14 : 16,
+                          color: context.isDark
+                              ? Colors.white.withOpacity(0.3)
+                              : Colors.black38,
                         ),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
                       ),
                     ),
-                  )
+                  ),
                 ],
-              )),
+              ),
+            ),
+          ),
         ),
+
+        // Bottom toolbar (unchanged)
         Expanded(
-          flex: 2,
-          child: Row(
-            children: [
-              Expanded(
-                  flex: context.isMobile ? 3 : 2,
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 20, horizontal: 10),
-                      margin: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Colors.grey.withOpacity(0.1),
-                            width: 1,
-                          ),
-                          color: context.isDark
-                              ? AppColors.darkLightBackground
-                              : AppColors.lightLightBackground,
-                          borderRadius: BorderRadius.circular(10)),
-                      child: _dropDownButton(context.isMobile),
-                    ),
-                  )),
-              Expanded(
-                  flex: context.isMobile ? 8 : 9,
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    margin: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Colors.grey.withOpacity(0.1),
-                          width: 1,
-                        ),
-                        color: context.isDark
-                            ? AppColors.darkLightBackground
-                            : AppColors.lightLightBackground,
-                        borderRadius: BorderRadius.circular(10)),
-                    child: dropdownValue == 'image'
-                        ? _imagePicker()
-                        : TextFormField(
-                            controller: _additionController,
-                            onFieldSubmitted: (value) {
-                              String modifiedValue = value;
+          flex: context.isMobile ? 3 : 2,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: context.isDark
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.black.withOpacity(0.05),
+                width: 1,
+              ),
+              color: context.isDark ? NexusColors.darkSurface : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            // Rest of the toolbar code unchanged
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Dropdown section - unchanged
+                      Container(
+                        width: context.isMobile ? 110 : 140,
+                        margin: const EdgeInsets.only(right: 12),
+                        child: _dropDownButton(context.isMobile),
+                      ),
 
-                              if (dropdownValue == 'p') {
-                                modifiedValue = '\n\n$value';
-                              }
-                              if (dropdownValue == 'h1') {
-                                modifiedValue = '\n\n# $value';
-                              }
-                              if (dropdownValue == 'h2') {
-                                modifiedValue = '\n\n## $value';
-                              }
-                              if (dropdownValue == 'h3') {
-                                modifiedValue = '\n\n### $value';
-                              }
-                              if (dropdownValue == 'code') {
-                                modifiedValue = '\n\n``` \n$value\n ```';
-                              }
-                              if (dropdownValue == 'quote') {
-                                modifiedValue = '\n\n> $value';
-                              }
-                              if (dropdownValue == 'ul') {
-                                modifiedValue = '\n- $value';
-                              }
-                              if (dropdownValue == 'bold') {
-                                modifiedValue = '\n**$value**';
-                              }
-                              if (dropdownValue == 'italic') {
-                                modifiedValue = '\n$value*';
-                              }
-                              if (dropdownValue == 'strike') {
-                                modifiedValue = '\n~~$value~~';
-                              }
-                              if (dropdownValue == 'Ctask') {
-                                modifiedValue = '\n- [ ] $value';
-                              }
-                              if (dropdownValue == 'UCtask') {
-                                modifiedValue = '\n- [x] $value';
-                              }
-
-                              setState(() {
-                                _contentController.text += modifiedValue;
-                                content += modifiedValue;
-                                _additionController.clear();
-                              });
-                              print(content);
-                              context.read<BlogBloc>().add(ContentChanged(
-                                  content: content,
-                                  title: _articleController.text.trim()));
-                            },
-                            cursorColor: AppColors.primaryLight,
-                            style: GoogleFonts.robotoMono(
-                                fontSize: 18, fontWeight: FontWeight.w500),
-                            decoration: InputDecoration(
-                              hintText:
-                                  'Write content based on selected markdown..',
-                              hintStyle: GoogleFonts.robotoMono(),
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              errorBorder: InputBorder.none,
-                              disabledBorder: InputBorder.none,
-                              contentPadding:
-                                  const EdgeInsets.only(left: 15, right: 15),
+                      // Text input section - unchanged
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: context.isDark
+                                ? Colors.white.withOpacity(0.05)
+                                : Colors.black.withOpacity(0.03),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: context.isDark
+                                  ? Colors.white.withOpacity(0.1)
+                                  : Colors.black.withOpacity(0.05),
+                              width: 1,
                             ),
                           ),
-                  ))
-            ],
+                          child: dropdownValue == 'image'
+                              ? Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: _imagePicker(),
+                                )
+                              : Row(
+                                  children: [
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 16),
+                                        child: TextFormField(
+                                          controller: _additionController,
+                                          onFieldSubmitted: (value) {
+                                            if (value.isEmpty) return;
+
+                                            String modifiedValue = value;
+
+                                            // Existing dropdown handling code
+                                            if (dropdownValue == 'p') {
+                                              modifiedValue = '\n\n$value';
+                                            }
+                                            if (dropdownValue == 'h1') {
+                                              modifiedValue = '\n\n# $value';
+                                            }
+                                            if (dropdownValue == 'h2') {
+                                              modifiedValue = '\n\n## $value';
+                                            }
+                                            if (dropdownValue == 'h3') {
+                                              modifiedValue = '\n\n### $value';
+                                            }
+                                            if (dropdownValue == 'code') {
+                                              modifiedValue =
+                                                  '\n\n```\n$value\n```';
+                                            }
+                                            if (dropdownValue == 'quote') {
+                                              modifiedValue = '\n\n> $value';
+                                            }
+                                            if (dropdownValue == 'ul') {
+                                              modifiedValue = '\n- $value';
+                                            }
+                                            if (dropdownValue == 'bold') {
+                                              modifiedValue = '\n**$value**';
+                                            }
+                                            if (dropdownValue == 'italic') {
+                                              modifiedValue = '\n*$value*';
+                                            }
+                                            if (dropdownValue == 'strike') {
+                                              modifiedValue = '\n~~$value~~';
+                                            }
+                                            if (dropdownValue == 'Ctask') {
+                                              modifiedValue = '\n- [ ] $value';
+                                            }
+                                            if (dropdownValue == 'UCtask') {
+                                              modifiedValue = '\n- [x] $value';
+                                            }
+
+                                            setState(() {
+                                              _contentController.text +=
+                                                  modifiedValue;
+                                              content += modifiedValue;
+                                              _additionController.clear();
+                                            });
+
+                                            context.read<BlogBloc>().add(
+                                                ContentChanged(
+                                                    content: content,
+                                                    title: _articleController
+                                                        .text
+                                                        .trim()));
+                                          },
+                                          cursorColor: NexusColors.primaryBlue,
+                                          style: GoogleFonts.spaceGrotesk(
+                                            fontSize: 15,
+                                            color: context.isDark
+                                                ? Colors.white
+                                                : Colors.black87,
+                                          ),
+                                          decoration: InputDecoration(
+                                            hintText:
+                                                _getPlaceholderForDropdown(
+                                                    dropdownValue),
+                                            hintStyle: GoogleFonts.spaceGrotesk(
+                                              color: context.isDark
+                                                  ? Colors.white38
+                                                  : Colors.black38,
+                                            ),
+                                            border: InputBorder.none,
+                                            enabledBorder: InputBorder.none,
+                                            focusedBorder: InputBorder.none,
+                                            errorBorder: InputBorder.none,
+                                            disabledBorder: InputBorder.none,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+
+                                    // Add button
+                                    Container(
+                                      height: double.infinity,
+                                      width: 44,
+                                      decoration: BoxDecoration(
+                                        color: NexusColors.primaryBlue
+                                            .withOpacity(0.1),
+                                        borderRadius: const BorderRadius.only(
+                                          topRight: Radius.circular(8),
+                                          bottomRight: Radius.circular(8),
+                                        ),
+                                        border: Border.all(
+                                          color: NexusColors.primaryBlue
+                                              .withOpacity(0.2),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: IconButton(
+                                        icon: const Icon(
+                                          Icons.add,
+                                          color: NexusColors.primaryBlue,
+                                        ),
+                                        onPressed: () {
+                                          if (_additionController.text.isEmpty)
+                                            return;
+
+                                          String modifiedValue =
+                                              _additionController.text;
+
+                                          // Existing code for modifying based on dropdown
+                                          if (dropdownValue == 'p') {
+                                            modifiedValue =
+                                                '\n\n$modifiedValue';
+                                          }
+                                          if (dropdownValue == 'h1') {
+                                            modifiedValue =
+                                                '\n\n# $modifiedValue';
+                                          }
+                                          if (dropdownValue == 'h2') {
+                                            modifiedValue =
+                                                '\n\n## $modifiedValue';
+                                          }
+                                          if (dropdownValue == 'h3') {
+                                            modifiedValue =
+                                                '\n\n### $modifiedValue';
+                                          }
+                                          if (dropdownValue == 'code') {
+                                            modifiedValue =
+                                                '\n\n```\n$modifiedValue\n```';
+                                          }
+                                          if (dropdownValue == 'quote') {
+                                            modifiedValue =
+                                                '\n\n> $modifiedValue';
+                                          }
+                                          if (dropdownValue == 'ul') {
+                                            modifiedValue =
+                                                '\n- $modifiedValue';
+                                          }
+                                          if (dropdownValue == 'bold') {
+                                            modifiedValue =
+                                                '\n**$modifiedValue**';
+                                          }
+                                          if (dropdownValue == 'italic') {
+                                            modifiedValue =
+                                                '\n*$modifiedValue*';
+                                          }
+                                          if (dropdownValue == 'strike') {
+                                            modifiedValue =
+                                                '\n~~$modifiedValue~~';
+                                          }
+                                          if (dropdownValue == 'Ctask') {
+                                            modifiedValue =
+                                                '\n- [ ] $modifiedValue';
+                                          }
+                                          if (dropdownValue == 'UCtask') {
+                                            modifiedValue =
+                                                '\n- [x] $modifiedValue';
+                                          }
+
+                                          setState(() {
+                                            _contentController.text +=
+                                                modifiedValue;
+                                            content += modifiedValue;
+                                            _additionController.clear();
+                                          });
+
+                                          context.read<BlogBloc>().add(
+                                              ContentChanged(
+                                                  content: content,
+                                                  title: _articleController.text
+                                                      .trim()));
+                                        },
+                                        tooltip: 'Add to Content',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        )
+        ),
       ],
     );
   }
@@ -1115,62 +1955,121 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   Widget _dropDownButton(bool isMobile) {
-    return DropdownButton<String>(
-      value: dropdownValue,
-      dropdownColor: context.isDark
-          ? AppColors.darkLightBackground
-          : AppColors.lightLightBackground,
-      icon: const Icon(Icons.arrow_drop_down),
-      iconSize: isMobile ? 16 : 24,
-      elevation: 0,
-      style: GoogleFonts.robotoMono(),
-      underline: Container(
-        height: 2,
-        color: Colors.transparent,
-      ),
-      items: <String>[
-        'p',
-        'h1',
-        'h2',
-        'h3',
-        'code',
-        'quote',
-        'ul',
-        'bold',
-        'italic',
-        'strike',
-        'Ctask',
-        'UCtask',
-        'image',
-        'upload',
-      ].map<DropdownMenuItem<String>>((String value) {
-        return _dropDownItem(value, isMobile);
-      }).toList(),
-      onChanged: (String? value) {
-        if (dropdownValue == 'upload') {
-          print("want upload");
-          _uploadMarkdownFile();
-        } else {
-          setState(() {
-            dropdownValue = value!;
-          });
-        }
+    final dropdownItems = [
+      {'value': 'p', 'label': 'Paragraph', 'icon': Icons.text_fields},
+      {'value': 'h1', 'label': 'Heading 1', 'icon': Icons.title},
+      {'value': 'h2', 'label': 'Heading 2', 'icon': Icons.title},
+      {'value': 'h3', 'label': 'Heading 3', 'icon': Icons.title},
+      {'value': 'code', 'label': 'Code Block', 'icon': Icons.code},
+      {'value': 'quote', 'label': 'Quote', 'icon': Icons.format_quote},
+      {'value': 'ul', 'label': 'List Item', 'icon': Icons.format_list_bulleted},
+      {'value': 'bold', 'label': 'Bold', 'icon': Icons.format_bold},
+      {'value': 'italic', 'label': 'Italic', 'icon': Icons.format_italic},
+      {
+        'value': 'strike',
+        'label': 'Strikethrough',
+        'icon': Icons.strikethrough_s
       },
-    );
-  }
+      {
+        'value': 'Ctask',
+        'label': 'Task',
+        'icon': Icons.check_box_outline_blank
+      },
+      {'value': 'UCtask', 'label': 'Completed Task', 'icon': Icons.check_box},
+      {'value': 'image', 'label': 'Image', 'icon': Icons.image_outlined},
+      {'value': 'upload', 'label': 'Upload File', 'icon': Icons.upload_file},
+    ];
 
-  DropdownMenuItem<String> _dropDownItem(String value, bool isMobile) {
-    return DropdownMenuItem<String>(
-      value: value,
-      child: Center(
-        child: Text(
-          value,
-          style: GoogleFonts.robotoMono(
-              fontSize: isMobile ? 10 : 14,
-              color: context.isDark ? Colors.white : Colors.black),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: context.isDark
+            ? Colors.white.withOpacity(0.05)
+            : Colors.black.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: dropdownValue,
+          dropdownColor:
+              context.isDark ? NexusColors.darkSurface : Colors.white,
+          icon: const Icon(Icons.keyboard_arrow_down),
+          iconSize: isMobile ? 16 : 20,
+          elevation: 4,
+          isExpanded: true,
+          style: GoogleFonts.spaceGrotesk(
+            color: context.isDark ? Colors.white : Colors.black87,
+            fontSize: isMobile ? 13 : 14,
+          ),
+          menuMaxHeight: 400, // Set max height for dropdown menu
+          items: dropdownItems.map<DropdownMenuItem<String>>((item) {
+            return DropdownMenuItem<String>(
+              value: item['value'] as String,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    item['icon'] as IconData,
+                    size: isMobile ? 14 : 16,
+                    color: NexusColors.primaryBlue,
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      item['label'] as String,
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: isMobile ? 12 : 14,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: (String? value) {
+            if (value == 'upload') {
+              _uploadMarkdownFile();
+            } else {
+              setState(() {
+                dropdownValue = value!;
+              });
+            }
+          },
         ),
       ),
     );
+  }
+
+  String _getPlaceholderForDropdown(String dropdownValue) {
+    switch (dropdownValue) {
+      case 'p':
+        return 'Type paragraph text...';
+      case 'h1':
+        return 'Type main heading...';
+      case 'h2':
+        return 'Type subheading...';
+      case 'h3':
+        return 'Type section heading...';
+      case 'code':
+        return 'Type code snippet...';
+      case 'quote':
+        return 'Type quoted text...';
+      case 'ul':
+        return 'Type list item...';
+      case 'bold':
+        return 'Type bold text...';
+      case 'italic':
+        return 'Type italic text...';
+      case 'strike':
+        return 'Type text to strikethrough...';
+      case 'Ctask':
+        return 'Type uncompleted task...';
+      case 'UCtask':
+        return 'Type completed task...';
+      default:
+        return 'Type content here...';
+    }
   }
 
   @override
