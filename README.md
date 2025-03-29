@@ -8,6 +8,15 @@
 
 > A modern, feature-rich blogging platform built with Flutter web, focusing on community connection and content creation.
 
+## Deployment
+ 
+### Live Demo
+
+Experience Nexus in action at our official deployment:
+
+🌐 [https://nexus.rishia.in](https://nexus.rishia.in)
+
+
 ## Table of Contents
 
 - About Nexus
@@ -140,7 +149,19 @@ graph TD
     DS --> FIRESTORE
     DS --> STORAGE
     DS --> FUNCTIONS
-    
+ ```   
+
+ The architecture follows Clean Architecture principles with clear separation of concerns:
+ 
+ 1. **Presentation Layer**: Handles UI rendering and user interactions
+ 2. **Domain Layer**: Contains business logic independent of any platform or framework
+ 3. **Data Layer**: Manages data access and transformations
+ 4. **Core**: Provides shared functionality across layers
+ 5. **Firebase Services**: External services for data persistence and authentication
+ 
+ This design enables high testability, maintainability, and flexibility to adapt to changing requirements.
+
+
 ## Getting Started
 
 ### Prerequisites
