@@ -87,7 +87,7 @@ class _BlogPreviewContentState extends State<BlogPreviewContent> {
   }
 
   void _shareSignal(String title, String uid) {
-    final url = 'https://nexus.app/blog/$uid';
+    final url = 'https://nexus.rishia.in/blog/$uid';
     Share.share('$title\n\nRead more on Nexus: $url');
   }
 
@@ -685,7 +685,7 @@ class _BlogPreviewContentState extends State<BlogPreviewContent> {
   Widget _buildStreamlinedBeacon(
       BuildContext context, PreviewLoaded state, bool isDark) {
     final String beaconLink =
-        'https://nexus.app/blog/@${state.blogEntity.authors[0]}/${state.blogEntity.blogUid}';
+        'https://nexus.rishia.in/blog/@${state.blogEntity.authors[0]}/${state.blogEntity.blogUid}';
 
     return Container(
       margin: EdgeInsets.symmetric(
@@ -946,7 +946,7 @@ class _BlogPreviewContentState extends State<BlogPreviewContent> {
   }
 
   void _shareBeacon(String title, String username, String uid) {
-    final url = 'https://nexus.app/blog/@$username/$uid';
+    final url = 'https://nexus.rishia.in/blog/@$username/$uid';
     Share.share('$title\n\nConnect with this beacon on Nexus: $url');
   }
 }

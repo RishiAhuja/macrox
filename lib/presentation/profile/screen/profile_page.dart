@@ -116,7 +116,7 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
     BlocBuilder<ProfileBloc, ProfileState>(
       builder: (context, state) {
         if (state is UserLoaded) {
-          final url = 'https://nexus.app/profile/@${widget.username}';
+          final url = 'https://nexus.rishia.in/profile/@${widget.username}';
           final name = state.userData.name;
           Share.share('Connect with $name on Nexus Signal: $url');
         }
@@ -1252,7 +1252,7 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
                       IconButton(
                         onPressed: () {
                           final url =
-                              'https://nexus.app/signal/@${blog.authors[0]}/${blog.blogUid}';
+                              'https://nexus.rishia.in/signal/@${blog.authors[0]}/${blog.blogUid}';
                           Share.share(
                               '${blog.title}\n\nConnect with this beacon on Nexus: $url');
                         },
